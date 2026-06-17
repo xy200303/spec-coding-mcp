@@ -59,9 +59,9 @@ args = []
 GitHub Actions 已包含两条流水线：
 
 - `CI`：在 push、PR 和手动触发时运行 `npm ci`、`npm run build`、`npm run smoke`、`npm pack --dry-run`。
-- `Publish npm`：发布 GitHub Release 时自动执行构建、smoke test，并通过 npm Trusted Publishing/OIDC 执行 `npm publish --access public`。
+- `Publish npm`：发布 GitHub Release 时自动执行构建、smoke test，并使用 `NPM_TOKEN` 执行 `npm publish --access public`。
 
-发布前需要在 npmjs.com 的 package Trusted Publisher 中允许这个 GitHub 仓库，workflow filename 填 `publish-npm.yml`，不要填完整路径。Allowed actions 至少选择 `npm publish`。Release tag 必须和 `package.json` 的版本一致，例如当前版本 `0.1.0` 对应 tag `v0.1.0`。
+发布前需要在 GitHub 仓库的 `Settings -> Secrets and variables -> Actions` 中添加 `NPM_TOKEN`。Release tag 必须和 `package.json` 的版本一致，例如当前版本 `0.1.0` 对应 tag `v0.1.0`。
 
 ## 推荐工作流
 
