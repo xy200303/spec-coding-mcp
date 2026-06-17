@@ -68,7 +68,7 @@ specs/
 ## 安装
 
 ```bash
-npm install -g @xy200303/spec-coding-mcp
+npm install -g @dev_xiaoyun/spec-coding-mcp
 specc init
 ```
 
@@ -79,7 +79,7 @@ specc init
 ```toml
 [mcp_servers.spec-coding]
 command = "C:\\nvm4w\\nodejs\\node.exe"
-args = ["C:\\nvm4w\\nodejs\\node_modules\\@xy200303\\spec-coding-mcp\\dist\\index.js"]
+args = ["C:\\nvm4w\\nodejs\\node_modules\\@dev_xiaoyun\\spec-coding-mcp\\dist\\index.js"]
 ```
 
 路径需要按你的 Node 全局安装目录调整。
