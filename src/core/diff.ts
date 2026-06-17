@@ -1,5 +1,5 @@
 import type { BlockChange, BlockState, DocBlock } from "./types.js";
-import { jaccard } from "./utils.js";
+import { jaccard } from "../shared/utils.js";
 
 function titlePathKey(block: Pick<DocBlock | BlockState, "file" | "titlePath">): string {
   return `${block.file}#${block.titlePath.join(" > ")}`;

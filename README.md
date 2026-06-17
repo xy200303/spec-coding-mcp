@@ -25,34 +25,64 @@
 
 ## 使用方式
 
-```bash
-npm install
-npm run build
-```
+### 推荐：交互式安装
 
-在 Codex 配置里加入：
-
-```toml
-[mcp_servers.docs-is-code]
-command = "node"
-args = ["C:\\Users\\34834\\Desktop\\projectM\\dev\\docs_is_code\\dist\\index.js"]
-```
-
-然后重启 Codex。
-
-也可以从 npm 安装：
+从 npm 全局安装后运行：
 
 ```bash
 npm install -g docs-is-code-mcp
+dic init
 ```
 
-Codex 配置可写成：
+`dic init` 会自动扫描本机已安装的 AI 编程工具，并用 `@clack/prompts` 让你选择安装到哪些工具：
+
+- Codex：写入 `~/.codex/config.toml`
+- Claude Code：调用 `claude mcp add`
+- OpenCode：写入全局 `opencode.json`
+
+安装后重启对应工具即可使用 MCP。
+
+### 本地开发
+
+```bash
+npm install
+npm run build
+npm test
+```
+
+本地调试 MCP server：
+
+```bash
+npm run start
+```
+
+或直接使用构建后的 CLI：
+
+```bash
+node dist/index.js serve
+```
+
+### 手动配置备用
+
+如果不想使用 `dic init`，可以手动把 MCP server 加到工具配置里。npm 全局安装后，Codex 可写成：
 
 ```toml
 [mcp_servers.docs-is-code]
-command = "docs-is-code-mcp"
-args = []
+command = "dic"
+args = ["serve"]
 ```
+
+Windows 上如果工具无法直接解析 npm 全局 bin，可以写成：
+
+```toml
+[mcp_servers.docs-is-code]
+command = "cmd"
+args = ["/c", "dic", "serve"]
+```
+
+唯一命令：
+
+- `dic`
 
 ## 发布到 npm
 

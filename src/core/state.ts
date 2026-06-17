@@ -3,7 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import * as Automerge from "@automerge/automerge";
 import type { BlockChange, BlockState, DocBlock, DocsCodeState, JournalEvent } from "./types.js";
-import { ensureDir, nowIso, pathExists } from "./utils.js";
+import { ensureDir, nowIso, pathExists } from "../shared/utils.js";
 
 export type CrdtState = Automerge.Doc<DocsCodeState>;
 

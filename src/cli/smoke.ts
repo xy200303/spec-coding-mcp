@@ -1,9 +1,10 @@
 import { mkdtemp, rm, writeFile, mkdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { createModelContext } from "./context.js";
-import { initProject, markProjectSynced, planImplementation, scanProject } from "./core.js";
-import { generateSpecsFromPrompt, generateSpecsFromSource } from "./generator.js";
+import { createModelContext } from "../context/model-context.js";
+import { initProject, markProjectSynced, planImplementation, scanProject } from "../core/project.js";
+import { generateSpecsFromPrompt, generateSpecsFromSource } from "../generation/generator.js";
+import { registerTools, upsertCodexConfig, upsertOpenCodeConfig } from "./registry.js";
 
 const root = await mkdtemp(path.join(os.tmpdir(), "docs-is-code-mcp-"));
 const promptRoot = await mkdtemp(path.join(os.tmpdir(), "docs-is-code-prompt-"));
@@ -90,6 +91,31 @@ try {
   const sourceScan = await scanProject(sourceRoot, "docs");
   if (sourceScan.changes.length === 0) {
     throw new Error("Expected source-generated docs to be pending implementation.");
+  }
+  const codexConfig = upsertCodexConfig("[model]\nname = \"gpt-5\"\n", { command: "dic", args: ["serve"] });
+  if (!codexConfig.includes("[mcp_servers.docs-is-code]") || !codexConfig.includes("args = [\"serve\"]")) {
+    throw new Error("Expected Codex config upsert to add docs-is-code MCP server.");
+  }
+  const opencodeConfig = JSON.parse(upsertOpenCodeConfig("{}", { command: "dic", args: ["serve"] }));
+  if (opencodeConfig.mcp["docs-is-code"].type !== "local" || opencodeConfig.mcp["docs-is-code"].command[0] !== "dic") {
+    throw new Error("Expected OpenCode config upsert to add docs-is-code MCP server.");
+  }
+  const registryRoot = await mkdtemp(path.join(os.tmpdir(), "docs-is-code-registry-"));
+  try {
+    const results = await registerTools({
+      tools: ["codex", "opencode"],
+      paths: {
+        homeDir: registryRoot,
+        codexConfig: path.join(registryRoot, ".codex", "config.toml"),
+        opencodeConfig: path.join(registryRoot, ".config", "opencode", "opencode.json")
+      },
+      server: { command: "dic", args: ["serve"] }
+    });
+    if (results.some((result) => result.status !== "registered")) {
+      throw new Error("Expected Codex and OpenCode registry writes to succeed.");
+    }
+  } finally {
+    await rm(registryRoot, { recursive: true, force: true });
   }
   console.log("docs-is-code MCP smoke test passed");
 } finally {

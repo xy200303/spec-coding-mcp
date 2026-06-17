@@ -1,5 +1,5 @@
 import type { BlockChange, ImplementationTask, ScanResult } from "./types.js";
-import { unique } from "./utils.js";
+import { unique } from "../shared/utils.js";
 
 function blockLabel(change: BlockChange): string {
   const block = change.block;

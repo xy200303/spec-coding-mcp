@@ -5,7 +5,7 @@ import { diffBlocks } from "./diff.js";
 import { createImplementationTask, renderTaskMarkdown } from "./planner.js";
 import { scanDocs } from "./parser.js";
 import { baselineState, loadState, markChangesImplemented, plansDir, saveState, statePath, automergePath } from "./state.js";
-import { ensureDir, nowIso, pathExists } from "./utils.js";
+import { ensureDir, nowIso, pathExists } from "../shared/utils.js";
 
 export async function initProject(projectRoot: string, docsDir = "docs"): Promise<Record<string, unknown>> {
   const root = path.resolve(projectRoot);

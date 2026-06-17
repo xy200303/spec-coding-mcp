@@ -1,8 +1,8 @@
 import path from "node:path";
-import type { BlockChange, DocBlock } from "./types.js";
-import { createImplementationTask, renderTaskMarkdown } from "./planner.js";
-import { scanProject } from "./core.js";
-import { listTextFiles, relativePosix, unique } from "./utils.js";
+import type { BlockChange, DocBlock } from "../core/types.js";
+import { createImplementationTask, renderTaskMarkdown } from "../core/planner.js";
+import { scanProject } from "../core/project.js";
+import { listTextFiles, relativePosix, unique } from "../shared/utils.js";
 
 export interface DocsImplementationContext {
   projectRoot: string;

@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { BlockKind, DocBlock } from "./types.js";
-import { listMarkdownFiles, normalizeText, relativePosix, semanticText, sha256, unique } from "./utils.js";
+import { listMarkdownFiles, normalizeText, relativePosix, semanticText, sha256, unique } from "../shared/utils.js";
 
 interface Heading {
   level: number;
