@@ -1,6 +1,4 @@
-import { defineConfig } from "vitepress";
-
-export default defineConfig({
+export default {
   lang: "zh-CN",
   title: "Spec Coding MCP",
   description: "用 spec 驱动 AI 编程的本地 MCP 服务。",
@@ -8,6 +6,7 @@ export default defineConfig({
   cleanUrls: true,
   head: [
     ["link", { rel: "icon", href: "/favicon.svg" }],
+    ["link", { rel: "stylesheet", href: "/site.css" }],
     ["meta", { property: "og:type", content: "website" }],
     ["meta", { property: "og:title", content: "Spec Coding MCP" }],
     [
@@ -56,4 +55,4 @@ export default defineConfig({
       copyright: "Copyright (c) 2026 dev_xiaoyun"
     }
   }
-});
+};
