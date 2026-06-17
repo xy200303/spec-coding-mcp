@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.docs-code/
+.dev-mesh/
+.tmp/
+*.log
+*.tgz
+docs-spec-create/
+docs-spec-edit/
+docs-spec-extract/
+docs-spec-implement/

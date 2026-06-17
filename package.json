@@ -1,0 +1,50 @@
+{
+  "name": "docs-is-code-mcp",
+  "version": "0.1.0",
+  "description": "MCP service for document-driven programming without manual IDs or change logs.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "docs-is-code",
+    "specification",
+    "codex",
+    "automerge"
+  ],
+  "files": [
+    "dist",
+    "!dist/cli-smoke.*",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "bin": {
+    "docs-is-code-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "smoke": "node dist/cli-smoke.js",
+    "test": "npm run build && npm run smoke",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@automerge/automerge": "^3.2.6",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
