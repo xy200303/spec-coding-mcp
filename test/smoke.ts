@@ -160,7 +160,7 @@ try {
   } finally {
     console.log = originalLog;
   }
-  if (versionLines[0] !== "0.1.5") {
+  if (versionLines[0] !== "0.2.0") {
     throw new Error(`Expected CLI version output, got: ${versionLines.join(" | ")}`);
   }
 
