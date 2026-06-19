@@ -1,0 +1,116 @@
+name: Prepare npm release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, for example 0.2.4.
+        required: true
+        type: string
+      dry_run:
+        description: Run checks without committing or pushing the release tag.
+        required: true
+        type: boolean
+        default: false
+      replace_existing_tag:
+        description: Delete and recreate the existing vX.Y.Z tag when npm has not published that version.
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prepare-npm-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare version and tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Use latest npm
+        run: npm install -g npm@latest
+
+      - name: Validate release target
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ inputs.version }}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Version must be a valid npm semver, for example 0.2.4."
+            exit 1
+          fi
+
+          package_name="$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).name")"
+          tag="v$version"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            if [ "${{ inputs.replace_existing_tag }}" != "true" ]; then
+              echo "Tag $tag already exists. Enable replace_existing_tag to recreate a failed tag, or choose another version."
+              exit 1
+            fi
+            echo "Tag $tag exists and will be recreated after verification."
+          fi
+
+          if npm view "$package_name@$version" version >/dev/null 2>&1; then
+            echo "$package_name@$version already exists on npm."
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Update package version
+        run: |
+          npm version "${{ steps.release.outputs.version }}" --no-git-tag-version
+          npm install --package-lock-only --ignore-scripts
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify
+        run: npm run verify
+
+      - name: Check package contents
+        run: npm pack --dry-run
+
+      - name: Commit and push release tag
+        if: ${{ !inputs.dry_run }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "发布 ${{ steps.release.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/${{ steps.release.outputs.tag }}" >/dev/null; then
+            git tag -d "${{ steps.release.outputs.tag }}"
+          fi
+          git tag "${{ steps.release.outputs.tag }}"
+          if [ "${{ inputs.replace_existing_tag }}" = "true" ]; then
+            git push origin ":refs/tags/${{ steps.release.outputs.tag }}" || true
+          fi
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "${{ steps.release.outputs.tag }}"
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: echo "Dry run completed. No commit or tag was pushed."

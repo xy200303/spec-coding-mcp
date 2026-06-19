@@ -10,10 +10,10 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Run npm publish as a dry run.
+        description: Run npm publish as a dry run instead of publishing.
         required: true
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: read
