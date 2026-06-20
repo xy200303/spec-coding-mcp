@@ -239,6 +239,8 @@ specc bootstrap --help
 
 `specc status` 只读输出当前版本、项目路径、specs 路径、Workflow State 计数、open TODO 数量和下一步建议，不启动 MCP server，也不会写入文件。需要给脚本或 CI 解析时使用 `--json`。
 
+`specc status --json` 会保留兼容旧脚本的 `nextStep` 字符串，同时提供机器可读的 `recommendation.nextTool`、`recommendation.alternatives` 和 `recommendation.reason`。脚本和编辑器插件应优先读取 `recommendation.nextTool`，避免解析人类可读文案。
+
 `--project-kind` 支持 `auto`、`new`、`existing`，默认 `auto`。`specc bootstrap` 会生成 `AGENTS.md`、`specs/` 和第一批可执行入口；旧项目会生成 AI 源码审查任务，新项目会生成起步 active spec。
 
 手动配置 Codex 时推荐使用 Node 直连入口：
