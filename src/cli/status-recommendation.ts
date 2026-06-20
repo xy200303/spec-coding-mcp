@@ -12,6 +12,8 @@ export interface StatusRecommendation {
   alternatives: string[];
   arguments: RecommendationArguments;
   reason: string;
+  when: string;
+  afterwards: string;
 }
 
 export interface StatusDecision extends StatusRecommendation {
@@ -75,7 +77,9 @@ export function decideStatusRecommendation(input: StatusRecommendationInput): St
     nextTool: recommendation.nextTool,
     alternatives: recommendation.alternatives,
     arguments: recommendation.arguments,
-    reason: recommendation.reason
+    reason: recommendation.reason,
+    when: recommendation.when,
+    afterwards: recommendation.afterwards
   };
 }
 
@@ -84,6 +88,8 @@ export function publicStatusRecommendation(decision: StatusDecision): StatusReco
     nextTool: decision.nextTool,
     alternatives: decision.alternatives,
     arguments: decision.arguments,
-    reason: decision.reason
+    reason: decision.reason,
+    when: decision.when,
+    afterwards: decision.afterwards
   };
 }

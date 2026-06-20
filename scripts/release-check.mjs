@@ -54,6 +54,8 @@ function assertDocumentationContract(readmeText, agentsText) {
     "recommendation.alternatives",
     "recommendation.arguments",
     "recommendation.reason",
+    "recommendation.when",
+    "recommendation.afterwards",
     "nextStep",
     "open TODO",
     "specc bootstrap",

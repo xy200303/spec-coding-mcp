@@ -239,7 +239,7 @@ specc bootstrap --help
 
 `specc status` 只读输出当前版本、项目路径、specs 路径、Workflow State 计数、open TODO 数量和下一步建议，不启动 MCP server，也不会写入文件。需要给脚本或 CI 解析时使用 `--json`。
 
-`specc status --json` 会输出顶层 `schemaVersion`，用于脚本、CI 和编辑器插件判断机器可读契约版本；当前 `schemaVersion` 为 `1`。JSON 仍保留兼容旧脚本的 `nextStep` 字符串，同时提供机器可读的 `recommendation.nextTool`、`recommendation.alternatives`、`recommendation.arguments` 和 `recommendation.reason`。脚本和编辑器插件应优先读取 `recommendation.nextTool` 与 `recommendation.arguments`，避免解析人类可读文案。
+`specc status --json` 会输出顶层 `schemaVersion`，用于脚本、CI 和编辑器插件判断机器可读契约版本；当前 `schemaVersion` 为 `1`。JSON 仍保留兼容旧脚本的 `nextStep` 字符串，同时提供机器可读的 `recommendation.nextTool`、`recommendation.alternatives`、`recommendation.arguments`、`recommendation.reason`、`recommendation.when` 和 `recommendation.afterwards`。脚本和编辑器插件应优先读取 `recommendation.nextTool` 与 `recommendation.arguments`，避免解析人类可读文案。
 
 `--project-kind` 支持 `auto`、`new`、`existing`，默认 `auto`。`specc bootstrap` 会生成 `AGENTS.md`、`specs/` 和第一批可执行入口；旧项目会生成 AI 源码审查任务，新项目会生成起步 active spec。
 

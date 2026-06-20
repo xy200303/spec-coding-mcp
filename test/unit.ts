@@ -202,6 +202,8 @@ async function testStatusRecommendationDecisions(): Promise<void> {
   });
   assert(empty.nextTool === "spec_bootstrap", "Expected empty status to recommend bootstrap.");
   assert(empty.arguments.projectKind === "auto", "Expected bootstrap recommendation to include projectKind.");
+  assert(empty.when.includes("项目首次接入"), "Expected status recommendation to expose workflow timing.");
+  assert(empty.afterwards.includes("spec_context"), "Expected status recommendation to expose follow-up guidance.");
 
   const doneOnly = decideStatusRecommendation({
     ...base,
