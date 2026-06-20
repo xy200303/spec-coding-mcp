@@ -18,6 +18,7 @@ export async function specContext(input: { projectRoot: string; specsDir?: strin
   const activeSpecs = await listSpecsIn(root, specsDir, "active");
   const reviewSpecs = await listSpecsIn(root, specsDir, "review");
   const todoSpecs = await listSpecsIn(root, specsDir, "todo");
+  const doneSpecs = await listSpecsIn(root, specsDir, "done");
   const selectedBase = requested.length
     ? [...activeSpecs, ...reviewSpecs, ...todoSpecs].filter((item) => requested.some((file) => item.file === file || item.file.endsWith(file)))
     : [...activeSpecs, ...todoSpecs];
@@ -31,6 +32,10 @@ export async function specContext(input: { projectRoot: string; specsDir?: strin
     root,
     specsDir,
     contextMode,
+    activeSpecs,
+    reviewSpecs,
+    todoSpecs,
+    doneSpecs,
     selectedSpecs,
     todos,
     source,
@@ -44,6 +49,7 @@ export async function specContext(input: { projectRoot: string; specsDir?: strin
     activeSpecs,
     reviewSpecs,
     todoSpecs,
+    doneSpecs,
     selectedSpecs,
     todos,
     source,

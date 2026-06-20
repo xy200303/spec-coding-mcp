@@ -98,6 +98,7 @@ export interface SpecContext {
   activeSpecs: SpecItem[];
   reviewSpecs: SpecItem[];
   todoSpecs: SpecItem[];
+  doneSpecs: SpecItem[];
   selectedSpecs: Array<SpecItem & { text: string }>;
   todos: TodoItem[];
   candidateFiles: string[];

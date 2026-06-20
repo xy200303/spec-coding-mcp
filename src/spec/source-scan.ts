@@ -103,7 +103,7 @@ function addCandidateFromRoutes(
   candidates.push({
     domain,
     name: "api",
-    title: `${domain} API 能力`,
+    title: `${domain} 源码审查任务`,
     evidence: relatedFiles,
     routes,
     components: relatedComponents,
@@ -306,7 +306,7 @@ export function specCandidatesFromSource(summary: SourceScanSummary): SourceSpec
     candidates.push({
       domain,
       name: "ui",
-      title: `${domain} 界面能力`,
+      title: `${domain} 源码审查任务`,
       evidence: summary.uiFiles.slice(0, 12),
       routes: [],
       components: summary.componentHints.slice(0, 12),
@@ -321,7 +321,7 @@ export function specCandidatesFromSource(summary: SourceScanSummary): SourceSpec
     candidates.push({
       domain,
       name: "data",
-      title: `${domain} 数据能力`,
+      title: `${domain} 源码审查任务`,
       evidence: summary.dataFiles.slice(0, 12),
       routes: [],
       components: [],
@@ -336,7 +336,7 @@ export function specCandidatesFromSource(summary: SourceScanSummary): SourceSpec
     candidates.push({
       domain: "core",
       name: "source-overview",
-      title: "源码核心能力概览",
+      title: "源码整体审查任务",
       evidence,
       routes: summary.routeHints.slice(0, 12),
       components: summary.componentHints.slice(0, 12),

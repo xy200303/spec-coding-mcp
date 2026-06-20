@@ -49,6 +49,11 @@ function assertDocumentationContract(readmeText, agentsText) {
     "node dist/index.js serve",
     "Current Task Protocol",
     "src/templates/prompt-protocol.ts",
+    "Recommended Next Step",
+    "Workflow State",
+    "当前 Spec Coding MCP 版本号",
+    "可安全推导的上下文值",
+    "不替模型编造 prompt、title 或行为记录",
     "npm run release:check",
     "npm run verify"
   ]) {
@@ -71,12 +76,29 @@ function assertWorkflowContract(ciText, publishText) {
   assert(!publishText.includes("run: npm run smoke"), "publish workflow must use verify instead of a partial smoke-only check.");
 }
 
+function assertReadToolSourceContract(contextMarkdownText, registerReadToolsText, workflowNextStepText) {
+  assertIncludes(contextMarkdownText, "APP_VERSION", "src/spec/context-markdown.ts");
+  assertIncludes(contextMarkdownText, "workflowStateLines", "src/spec/context-markdown.ts");
+  assertIncludes(contextMarkdownText, "projectRoot: input.root", "src/spec/context-markdown.ts");
+  assertIncludes(contextMarkdownText, "specsDir: input.specsDir", "src/spec/context-markdown.ts");
+  assertIncludes(registerReadToolsText, "workflowStateLines", "src/mcp/register-read-tools.ts");
+  assertIncludes(registerReadToolsText, "projectRoot,", "src/mcp/register-read-tools.ts");
+  assertIncludes(registerReadToolsText, "specsDir,", "src/mcp/register-read-tools.ts");
+  assertIncludes(workflowNextStepText, "projectRoot: string", "src/spec/workflow-next-step.ts");
+  assertIncludes(workflowNextStepText, "specsDir: string", "src/spec/workflow-next-step.ts");
+  assertIncludes(workflowNextStepText, "projectArguments(state)", "src/spec/workflow-next-step.ts");
+  assertIncludes(workflowNextStepText, "currentWorkFile(state", "src/spec/workflow-next-step.ts");
+}
+
 const packageJson = readJson("package.json");
 const packageLock = readJson("package-lock.json");
 const metaText = readText("src/shared/meta.ts");
 const compatibilityText = readText("src/cli/compatibility-contract.ts");
 const readmeText = readText("README.md");
 const agentsText = readText("AGENTS.md");
+const contextMarkdownText = readText("src/spec/context-markdown.ts");
+const registerReadToolsText = readText("src/mcp/register-read-tools.ts");
+const workflowNextStepText = readText("src/spec/workflow-next-step.ts");
 const ciText = readText(".github/workflows/ci.yml");
 const publishText = readText(".github/workflows/publish-npm.yml");
 
@@ -84,6 +106,7 @@ assertVersionContract(packageJson, packageLock, metaText);
 assertScriptContract(packageJson);
 assertCompatibilityContract(compatibilityText);
 assertDocumentationContract(readmeText, agentsText);
+assertReadToolSourceContract(contextMarkdownText, registerReadToolsText, workflowNextStepText);
 assertWorkflowContract(ciText, publishText);
 
 console.log("spec-coding release checks passed");

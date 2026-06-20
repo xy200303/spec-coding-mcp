@@ -10,6 +10,19 @@ import { inferProjectName, inferSpecFileName, inferTitle, inferTodoFileName, lis
 import { writeTextFile } from "./file-writers.js";
 import { nowIso, relativePosix } from "../shared/utils.js";
 
+type BootstrapProjectKind = "auto" | "new" | "existing";
+
+function mergeSpecResults(results: SpecResult[]): Pick<SpecResult, "files" | "specs"> {
+  return {
+    files: results.flatMap((result) => result.files),
+    specs: results.flatMap((result) => result.specs)
+  };
+}
+
+function hasImplementationFiles(summary: Awaited<ReturnType<typeof scanSource>>): boolean {
+  return summary.totalFiles > summary.manifests.length;
+}
+
 export async function initSpecs(input: { projectRoot: string; specsDir?: string; projectName?: string; overwrite?: boolean }): Promise<SpecResult> {
   const root = path.resolve(input.projectRoot);
   const specsDir = input.specsDir ?? "specs";
@@ -30,6 +43,84 @@ export async function initSpecs(input: { projectRoot: string; specsDir?: string;
     nextSteps: [
       `在 ${specsDir}/active/ 中创建或修改 spec，也可以把短任务放到 ${specsDir}/todo/。`,
       "调用 spec_context 让 Codex 按 active specs 和未完成 TODO 修改代码和测试。"
+    ]
+  };
+}
+
+export async function bootstrapProject(input: {
+  projectRoot: string;
+  specsDir?: string;
+  projectName?: string;
+  projectKind?: BootstrapProjectKind;
+  initialPrompt?: string;
+  overwrite?: boolean;
+  includePatterns?: string[];
+  excludePatterns?: string[];
+  maxFiles?: number;
+}): Promise<SpecResult> {
+  const root = path.resolve(input.projectRoot);
+  const specsDir = input.specsDir ?? "specs";
+  const projectName = inferProjectName(root, input.projectName);
+  const requestedKind = input.projectKind ?? "auto";
+  const summary = requestedKind === "new"
+    ? undefined
+    : await scanSource({
+        root,
+        includePatterns: input.includePatterns,
+        excludePatterns: input.excludePatterns,
+        maxFiles: input.maxFiles
+      });
+  const projectKind = requestedKind === "auto" && summary && hasImplementationFiles(summary) ? "existing" : requestedKind === "auto" ? "new" : requestedKind;
+  const base = await initSpecs({ projectRoot: root, specsDir, projectName, overwrite: input.overwrite });
+  const agents = await generateAgentsFile({ projectRoot: root, projectName, overwrite: input.overwrite });
+
+  if (projectKind === "existing") {
+    const source = await generateSpecsFromSource({
+      projectRoot: root,
+      specsDir,
+      projectName,
+      overwrite: input.overwrite,
+      includePatterns: input.includePatterns,
+      excludePatterns: input.excludePatterns,
+      maxFiles: input.maxFiles
+    });
+    const merged = mergeSpecResults([base, { ...source, files: [...agents.files, ...source.files] }]);
+    return {
+      projectRoot: root,
+      specsDir,
+      files: merged.files,
+      specs: merged.specs,
+      source: source.source,
+      nextSteps: [
+        "已按旧项目流程初始化：生成 AGENTS、specs 基础文件和 AI 源码审查任务。",
+        `先让 AI 阅读 ${specsDir}/review/*.md 中列出的源码和测试，补全真实业务行为。`,
+        `需要开发时，把已补全的 spec 放到 ${specsDir}/active/，再调用 spec_context。`
+      ]
+    };
+  }
+
+  const prompt = input.initialPrompt?.trim() || [
+    `为 ${projectName} 建立项目起步 spec。`,
+    "请先明确项目目标、核心模块、目录结构、验证命令和第一批可交付功能。",
+    "不要直接开始写代码；先让用户确认目标和范围。"
+  ].join("\n");
+  const spec = await createSpecFromPrompt({
+    projectRoot: root,
+    specsDir,
+    prompt,
+    title: "项目起步规划",
+    overwrite: input.overwrite
+  });
+  const merged = mergeSpecResults([base, { ...spec, files: [...agents.files, ...spec.files] }]);
+  return {
+    projectRoot: root,
+    specsDir,
+    files: merged.files,
+    specs: merged.specs,
+    nextSteps: [
+      "已按新项目流程初始化：生成 AGENTS、specs 基础文件和起步 active spec。",
+      `先审阅并补全 ${spec.specs[0] ?? `${specsDir}/active/*.md`}，确认项目目标、结构和验收标准。`,
+      "确认后调用 spec_context，让 AI 按 active spec 开始开发。"
     ]
   };
 }
@@ -75,8 +166,8 @@ export async function generateSpecsFromSource(input: {
     source: summary,
     nextSteps: [
       `审阅 ${specsDir}/review/source-inventory.md 和 ${specsDir}/review/index.md。`,
-      `修改 ${specsDir}/review/*.md，把源码反推内容改成真实业务 spec。`,
-      `开发时把目标 spec 放到 ${specsDir}/active/，再调用 spec_context。`
+      `让 AI 打开并阅读 ${specsDir}/review/*.md 中列出的源码、测试和配置线索，补全真实业务行为。`,
+      `开发时把已补全的目标 spec 放到 ${specsDir}/active/，再调用 spec_context。`
     ]
   };
 }

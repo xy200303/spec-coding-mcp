@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { specContext } from "../src/spec/context.js";
 import { businessConfirmationBullets, currentTaskInstructionBullets, engineeringConstraintBullets } from "../src/templates/markdown.js";
-import { createSpecFromPrompt, createTodoFromPrompt, generateAgentsFile, generateSpecsFromSource, initSpecs, listSpecs } from "../src/spec/scaffold.js";
+import { bootstrapProject, createSpecFromPrompt, createTodoFromPrompt, generateAgentsFile, generateSpecsFromSource, initSpecs, listSpecs } from "../src/spec/scaffold.js";
 import { markSpecDone } from "../src/spec/done-writer.js";
 import { recordSpecCheckpoint } from "../src/spec/checkpoint-writer.js";
 import { recordSpecReviewResult } from "../src/spec/review-result-writer.js";
@@ -89,10 +89,56 @@ try {
     throw new Error("Expected spec init to create specs README.");
   }
 
+  const emptyWorkflowRoot = await mkdtemp(path.join(os.tmpdir(), "spec-coding-empty-workflow-"));
+  await initSpecs({ projectRoot: emptyWorkflowRoot, specsDir: "specs", projectName: "空项目" });
+  const emptyWorkflowContext = await specContext({ projectRoot: emptyWorkflowRoot, specsDir: "specs" });
+  assertIncludesAll(emptyWorkflowContext.markdown, [
+    "当前没有可执行任务",
+    "Recommended Next Step",
+    "nextTool: `spec_bootstrap`",
+    "arguments:",
+    `"projectRoot":"${emptyWorkflowRoot.replace(/\\/g, "\\\\")}"`,
+    "\"projectKind\":\"auto\"",
+    "当前没有可执行任务，不能直接实现代码"
+  ], "Expected empty spec_context to render a structured next step instead of stopping at a warning");
+  await rm(emptyWorkflowRoot, { recursive: true, force: true });
+
   const generated = await generateSpecsFromSource({ projectRoot: root, specsDir: "specs", projectName: "用户系统" });
   if (!generated.source?.routeHints.length || !generated.specs.some((file) => file.includes("review"))) {
     throw new Error("Expected source generation to create review specs with route hints.");
   }
+  const generatedReviewText = await readFile(path.join(root, generated.specs[0]), "utf8");
+  assertIncludesAll(generatedReviewText, [
+    "source-review/needs-ai-summary",
+    "它不是业务结论，只是交给 AI 阅读源码的任务单",
+    "禁止把下面的静态线索当成业务事实",
+    "AI 必须打开并阅读相关源码、测试和配置",
+    "AI 阅读源码后填写"
+  ], "Expected source generation to produce AI-guided review tasks instead of business conclusions");
+
+  const existingBootstrap = await bootstrapProject({ projectRoot: root, specsDir: "boot-existing", projectName: "用户系统", projectKind: "existing" });
+  if (!existingBootstrap.specs.some((file) => file.includes("boot-existing/review")) || !existingBootstrap.files.some((file) => file.path.endsWith("AGENTS.md"))) {
+    throw new Error("Expected existing project bootstrap to create AGENTS and review tasks.");
+  }
+
+  const newProjectRoot = await mkdtemp(path.join(os.tmpdir(), "spec-coding-new-project-"));
+  const newBootstrap = await bootstrapProject({
+    projectRoot: newProjectRoot,
+    specsDir: "specs",
+    projectName: "新项目",
+    projectKind: "new",
+    initialPrompt: "创建一个简单 CLI 项目。"
+  });
+  if (!newBootstrap.specs.some((file) => file.includes("specs/active")) || !newBootstrap.files.some((file) => file.path.endsWith("AGENTS.md"))) {
+    throw new Error("Expected new project bootstrap to create AGENTS and a starter active spec.");
+  }
+  const starterSpec = await readFile(path.join(newProjectRoot, newBootstrap.specs[0]), "utf8");
+  assertIncludesAll(starterSpec, [
+    "创建一个简单 CLI 项目",
+    "- status: active",
+    "## AI 实现计划"
+  ], "Expected new project bootstrap to create a starter active spec from the initial prompt");
+  await rm(newProjectRoot, { recursive: true, force: true });
 
   const agents = await generateAgentsFile({ projectRoot: root, projectName: "用户系统" });
   if (agents.file !== "AGENTS.md" || !agents.files.some((file) => file.path.endsWith("AGENTS.md"))) {
@@ -125,6 +171,11 @@ try {
   const harness = createToolHarness();
   registerReadTools(harness as never, guard);
   registerWriteTools(harness as never, guard);
+  assertIncludesAll(harness.description("spec_bootstrap"), ["PRIMARY ENTRYPOINT", "Use this before spec_init"], "Expected spec_bootstrap to be the primary tool entrypoint");
+  assertIncludesAll(harness.description("spec_init"), ["Advanced setup helper", "Prefer spec_bootstrap"], "Expected spec_init to be marked as an advanced helper");
+  assertIncludesAll(harness.description("spec_generate_from_source"), ["Advanced existing-project helper", "Prefer spec_bootstrap"], "Expected source generation to be marked as an advanced helper");
+  assertIncludesAll(harness.description("spec_generate_agents"), ["Advanced maintenance helper", "Prefer spec_bootstrap"], "Expected AGENTS generation to be marked as an advanced helper");
+  assertIncludesAll(harness.description("spec_done"), ["Archive only fully implemented and verified specs", "Do not use for partial work"], "Expected spec_done to reject partial-work usage");
   assertToolDescriptionRequiresSpecContext(harness.description("spec_create"));
   assertToolDescriptionRequiresSpecContext(harness.description("spec_done"));
   let blockedMessage = "";
@@ -153,9 +204,27 @@ try {
     throw new Error("Expected default spec_context mode to omit source scan output.");
   }
   assertIncludesAll(contextResult.content[0].text, [
+    `Spec Coding MCP：\`${APP_VERSION}\``,
+    "Workflow State",
+    "active specs: 0",
+    "todo specs: 0",
+    "review specs:",
+    "done specs:",
+    "selected specs: 0",
+    "open TODOs: 0",
     "当前没有可执行任务",
-    "当前没有 open TODO，也没有 selected spec；不要开始实现"
-  ], "Expected empty spec_context to stop the model from starting implementation");
+    "当前没有 open TODO，也没有 selected spec；不要开始实现",
+    "Recommended Next Step",
+    "nextTool: `spec_create`",
+    "alternatives:",
+    "arguments:",
+    `"projectRoot":"${root.replace(/\\/g, "\\\\")}"`,
+    "\"specsDir\":\"specs\"",
+    "\"prompt\":\"<confirmed behavior summary from review>\"",
+    "\"title\":\"<business capability name>\"",
+    "reason:",
+    "afterwards:"
+  ], "Expected review-only spec_context to stop direct implementation and recommend creating an active spec");
   const createdAfterContext = await harness.call("spec_create", {
     projectRoot: root,
     specsDir: "specs",
@@ -243,10 +312,49 @@ try {
   if (listed.active.length !== 1 || listed.todo.length !== 1 || listed.review.length === 0) {
     throw new Error("Expected active, todo, and review specs to be listed.");
   }
+  const listedText = await harness.call("spec_list", { projectRoot: root, specsDir: "specs" });
+  assertIncludesAll(listedText.content[0]?.text ?? "", [
+    `Spec Coding MCP：${APP_VERSION}`,
+    "Workflow State",
+    "active specs: 1",
+    "todo specs: 1",
+    "review specs:",
+    "done specs:",
+    "selected specs: 0",
+    "open TODOs: 0",
+    "Recommended Next Step",
+    "nextTool: `spec_context`",
+    "alternatives:",
+    "arguments:",
+    `"projectRoot":"${root.replace(/\\/g, "\\\\")}"`,
+    "\"specsDir\":\"specs\"",
+    "reason:",
+    "when:",
+    "afterwards:"
+  ], "Expected spec_list to recommend spec_context before implementation");
 
   const context = await specContext({ projectRoot: root, specsDir: "specs" });
+  const firstOpenTodoFile = context.todos.find((item) => !item.checked)?.file;
+  if (!firstOpenTodoFile) {
+    throw new Error("Expected spec context to include at least one open TODO.");
+  }
   assertIncludesAll(context.markdown, [
+    "Workflow State",
+    "active specs: 1",
+    "todo specs: 1",
+    "selected specs: 2",
+    "open TODOs:",
     "Open TODOs",
+    "Recommended Next Step",
+    "nextTool: `spec_checkpoint`",
+    "alternatives:",
+    "arguments:",
+    `"projectRoot":"${root.replace(/\\/g, "\\\\")}"`,
+    "\"specsDir\":\"specs\"",
+    `"file":"${firstOpenTodoFile}"`,
+    "\"completedTodos\":\"<completed TODO text>\"",
+    "\"verification\":\"<commands and status>\"",
+    "当前有 open TODO",
     "先读本次 `spec_context`；没有上下文不得实现或改文档。",
     "selected specs 和 open TODOs 是唯一需求源，不按旧对话扩范围。",
     "Engineering Constraints",

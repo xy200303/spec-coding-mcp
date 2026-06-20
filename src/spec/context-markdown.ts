@@ -2,6 +2,8 @@
 import type { ContextMode, SourceScanSummary, SpecContext, SpecItem } from "./types.js";
 import { businessConfirmationBullets, engineeringRuleSections } from "../templates/markdown.js";
 import { currentTaskInstructions } from "../templates/prompt-protocol.js";
+import { workflowRecommendationLines } from "./workflow-next-step.js";
+import { APP_VERSION } from "../shared/meta.js";
 
 function withFallbackLines(items: string[], empty: string): string[] {
   return items.length ? items : [empty];
@@ -30,6 +32,27 @@ function renderTodoLines(todos: SpecContext["todos"], hasSelectedSpecs: boolean)
 function renderCompletedTodoLines(todos: SpecContext["todos"]): string[] {
   const completed = todos.filter((todo) => todo.checked);
   return completed.length ? completed.map((todo) => `- ${todo.text}（${todo.file}:${todo.line}）`) : ["- 无"];
+}
+
+export function workflowStateLines(input: {
+  activeCount: number;
+  todoCount: number;
+  reviewCount: number;
+  doneCount: number;
+  selectedCount: number;
+  openTodoCount: number;
+}): string[] {
+  return [
+    "## Workflow State",
+    "",
+    `- active specs: ${input.activeCount}`,
+    `- todo specs: ${input.todoCount}`,
+    `- review specs: ${input.reviewCount}`,
+    `- done specs: ${input.doneCount}`,
+    `- selected specs: ${input.selectedCount}`,
+    `- open TODOs: ${input.openTodoCount}`,
+    ""
+  ];
 }
 
 const sourceGuidance = [
@@ -95,6 +118,10 @@ export function buildSpecContextMarkdown(input: {
   root: string;
   specsDir: string;
   contextMode: ContextMode;
+  activeSpecs: SpecItem[];
+  reviewSpecs: SpecItem[];
+  todoSpecs: SpecItem[];
+  doneSpecs: SpecItem[];
   selectedSpecs: Array<SpecItem & { text: string }>;
   todos: SpecContext["todos"];
   source?: SourceScanSummary;
@@ -105,11 +132,20 @@ export function buildSpecContextMarkdown(input: {
   return [
     "# Spec Coding Context",
     "",
+    `Spec Coding MCP：\`${APP_VERSION}\``,
     `项目：\`${input.root}\``,
     `Specs：\`${input.specsDir}\``,
     `选中 spec：${input.selectedSpecs.length}`,
     `Context mode：\`${input.contextMode}\``,
     "",
+    ...workflowStateLines({
+      activeCount: input.activeSpecs.length,
+      todoCount: input.todoSpecs.length,
+      reviewCount: input.reviewSpecs.length,
+      doneCount: input.doneSpecs.length,
+      selectedCount: input.selectedSpecs.length,
+      openTodoCount: openTodos.length
+    }),
     ...renderSourceSignals(input.source),
     "## Selected Specs",
     "",
@@ -119,6 +155,15 @@ export function buildSpecContextMarkdown(input: {
     "",
     ...renderTodoLines(openTodos, input.selectedSpecs.length > 0),
     "",
+    ...workflowRecommendationLines({
+      projectRoot: input.root,
+      specsDir: input.specsDir,
+      activeSpecs: input.activeSpecs,
+      reviewSpecs: input.reviewSpecs,
+      todoSpecs: input.todoSpecs,
+      openTodos,
+      selectedSpecs: input.selectedSpecs
+    }),
     "## Completed TODOs",
     "",
     ...renderCompletedTodoLines(input.todos),

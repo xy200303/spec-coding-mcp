@@ -77,7 +77,7 @@ specs/
     removal.md
 ```
 
-- `review/`：从源码反推的当前代码事实，状态通常是 `source-derived/current-code`，用于用户审查。
+- `review/`：AI 源码审查任务，状态通常是 `source-review/needs-ai-summary`；静态线索只用于指导 AI 阅读源码，不代表业务事实。
 - `active/`：准备实现或正在实现的 spec。
 - `todo/`：轻量可执行 TODO 清单，适合临时任务、拆分步骤或补充实现顺序。
 - `done/`：已实现并验证通过的 spec。
@@ -85,33 +85,51 @@ specs/
 
 ## MCP 工具
 
+### 主路径工具
+
 | 工具 | 作用 |
 |---|---|
-| `spec_generate_agents` | 在项目根目录生成或更新 `AGENTS.md` |
-| `spec_init` | 初始化 `specs/` 目录和模板 |
-| `spec_generate_from_source` | 从现有源码反推 review specs |
-| `spec_create` | 根据用户描述创建 active spec |
-| `spec_todo` | 根据用户描述创建可执行 TODO 清单 |
-| `spec_list` | 列出 review、active、todo、done specs |
-| `spec_context` | 返回 spec、TODO、工程约束和可选搜索线索；默认不替模型扫描源码 |
-| `spec_checkpoint` | 实现后记录完成 TODO、变更文件、验证结果、实际行为、风险和阻塞 |
-| `spec_review_result` | 结构化记录完成、阻塞、验证命令、关联文件和实际行为 |
-| `spec_done` | 验证通过后把 spec 移到 done，并保留最终实际行为记录 |
+| `spec_bootstrap` | 首选项目入口：新项目生成 AGENTS、specs 和起步 active spec；旧项目生成 AGENTS、specs 和 AI 源码审查任务 |
+| `spec_context` | 所有写操作前必须调用；返回 spec、TODO、工程约束、可选搜索线索和下一步推荐 |
+| `spec_list` | inspect 阶段查看 review、active、todo、done 状态，并推荐下一步先读取 `spec_context` |
+
+### 任务创建工具
+
+| 工具 | 适用场景 |
+|---|---|
+| `spec_create` | 功能开发、问题修复或移除任务，需要行为规则、验收标准和实现计划 |
+| `spec_todo` | 小而明确的临时任务，适合按 TODO 顺序执行 |
+
+### 结果记录工具
+
+| 工具 | 适用场景 |
+|---|---|
+| `spec_checkpoint` | 阶段性完成后记录 TODO、文件、验证、实际行为、风险和阻塞 |
+| `spec_review_result` | 高级交接/审查记录，适合部分完成、存在未完成 TODO 或阻塞时使用 |
+| `spec_done` | 仅在实现、TODO、验证和最终行为契约都完成后归档 |
+
+### 高级维护工具
+
+| 工具 | 适用场景 |
+|---|---|
+| `spec_init` | 只初始化或刷新 `specs/` 目录和模板；普通项目接入优先用 `spec_bootstrap` |
+| `spec_generate_agents` | 只重新生成 `AGENTS.md`；普通项目接入优先用 `spec_bootstrap` |
+| `spec_generate_from_source` | 只重新生成旧项目的 AI 源码审查任务；普通旧项目接入优先用 `spec_bootstrap` |
 
 ## 推荐工作流
 
-### 先生成项目手册
+### 统一入口
 
-1. 在任何代码或文档变更前，先调用 `spec_context`。
-2. 调用 `spec_generate_agents`。
-3. 检查项目根目录的 `AGENTS.md`。
-4. 按 `AGENTS.md`、`specs/` 和 TODO 开始开发。
+1. 新项目先调用 `spec_bootstrap`，传 `projectKind: "new"`，生成 `AGENTS.md`、`specs/` 和起步 active spec。
+2. 旧项目先调用 `spec_bootstrap`，传 `projectKind: "existing"`，生成 `AGENTS.md`、`specs/` 和 AI 源码审查任务。
+3. 不确定时使用 `projectKind: "auto"`，工具会根据源码线索选择新项目或旧项目流程。
+4. 之后再调用 `spec_context`，按 active spec 或 open TODO 开始开发。
 
 ### 旧系统第一次接入
 
-1. 调用 `spec_generate_from_source`。
-2. 用户阅读 `specs/review/source-inventory.md` 和 `specs/review/*.md`。
-3. 用户把源码反推内容改成真实业务规格。
+1. 调用 `spec_bootstrap`，传 `projectKind: "existing"`。
+2. AI 阅读 `specs/review/source-inventory.md` 和 `specs/review/*.md` 里的源码线索，并打开真实源码和测试。
+3. AI 把阅读后的真实行为总结成业务规格；不允许只靠静态线索补业务结论。
 4. 需要开发时，将目标 spec 放到 `specs/active/`，或让 `spec_context` 读取指定文件。
 5. Codex 按 spec 修改代码和测试。
 6. 验证通过后调用 `spec_done`。
@@ -127,7 +145,22 @@ specs/
 7. 阶段性完成后调用 `spec_checkpoint` 记录完成情况。
 8. 验证通过后调用 `spec_done`。
 
+### 流程选择规则
+
+- 新项目初始化：`spec_bootstrap`。
+- 旧项目接入：`spec_bootstrap`，然后 AI 补全 review spec。
+- 临时小任务：`spec_todo`。
+- 需要行为规则和验收标准的功能：`spec_create` 或已有 active spec。
+- 阶段记录：`spec_checkpoint` 或 `spec_review_result`。
+- 完成归档：只在实现、验证和最终行为契约都完成后调用 `spec_done`。
+
 `spec_context` 默认使用 `contextMode: "workflow"`，只输出任务流程、spec/TODO 和约束。需要源码线索时显式传入 `contextMode: "hints"`；需要完整源码扫描线索时再使用 `contextMode: "full"`。这些线索只是搜索入口，不是事实来源，模型修改前必须自行读取相关文件确认。
+
+`spec_list` 和 `spec_context` 都会输出 `Recommended Next Step`，但语义不同：`spec_list` 属于 inspect 阶段，通常推荐下一步先读取 `spec_context`；`spec_context` 属于执行前上下文阶段，才推荐执行 TODO、补全 review、实现 active spec 或记录结果。即使当前没有 active、todo、review 或 selected spec，`spec_context` 也必须输出结构化下一步推荐，而不是只提示“不要开始实现”。推荐会固定包含 `nextTool`、`alternatives`、`arguments`、`reason`、`when` 和 `afterwards`。`nextTool` 始终是单一工具 ID；`arguments` 只放可安全推导的上下文值或占位说明，不替模型编造 prompt、title 或行为记录。模型应优先执行 `nextTool`，只有用户明确要求或条件不满足时才考虑 `alternatives`。
+
+`spec_list` 和 `spec_context` 的输出头部会显示当前 Spec Coding MCP 版本号。版本号来自 `src/shared/meta.ts` 读取的 `package.json`，用于判断当前运行中的 MCP 服务是否已经重启或更新到最新构建。
+
+两者也会输出 `Workflow State` 摘要，展示 active、todo、review、done、selected spec 和 open TODO 数量。这个摘要只来自当前 specs 状态，帮助模型快速判断工作流位置，不替代源码阅读或业务判断。
 
 ### 写操作硬约束
 

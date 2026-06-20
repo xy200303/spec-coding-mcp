@@ -69,7 +69,7 @@ export async function recordSpecCheckpoint(input: {
     nextSteps: [
       marked.matched.length ? `已勾选 ${marked.matched.length} 个 TODO。` : "未匹配到可勾选 TODO。",
       unmatchedTodos.length ? `有 ${unmatchedTodos.length} 个 completedTodos 未匹配到原文，请检查 TODO 文案是否一致。` : "所有 completedTodos 均已匹配或未提供 completedTodos。",
-      "确认验证结果和风险后，可继续实现剩余 TODO，或调用 spec_done 归档。"
+      "确认剩余 TODO、验证结果、风险和最终行为契约后，才可调用 spec_done 归档。"
     ]
   };
 }
