@@ -1,7 +1,7 @@
 /* CLI entrypoint for starting the MCP server and registering it with coding tools. */
 import { cancel, intro, isCancel, multiselect, note, outro, spinner } from "@clack/prompts";
 import { fileURLToPath } from "node:url";
-import { bootstrapProject } from "../spec/scaffold.js";
+import { bootstrapProject, listSpecs } from "../spec/scaffold.js";
 import { renderSpecResult } from "../mcp/render-spec.js";
 import { detectProgrammingTools } from "./registry-detect.js";
 import { registerClaude, registerCodex, registerContinue, registerCursor, registerOpenCode, registerWindsurf } from "./registry-write.js";
@@ -38,6 +38,20 @@ function printBootstrapHelp(): void {
     "  --initial-prompt <text>     Starter prompt for new projects.",
     "  --overwrite                 Overwrite existing generated files.",
     "  -h, --help                  Show bootstrap help."
+  ].join("\n"));
+}
+
+function printStatusHelp(): void {
+  console.log([
+    `${APP_NAME} status`,
+    "",
+    "Usage:",
+    "  specc status [options]",
+    "",
+    "Options:",
+    "  --project-root <path>       Project root. Default: current working directory.",
+    "  --specs-dir <path>          Specs directory. Default: specs.",
+    "  -h, --help                  Show status help."
   ].join("\n"));
 }
 
@@ -87,6 +101,39 @@ async function runBootstrap(args: string[]): Promise<void> {
   });
 
   console.log(renderSpecResult("Spec Coding 项目引导完成", result));
+}
+
+function statusNextStep(input: { active: number; todo: number; review: number }): string {
+  if (input.active || input.todo || input.review) {
+    return "Call spec_context in your AI tool before changing code or docs.";
+  }
+  return "Run specc bootstrap --project-root <path> --project-kind auto.";
+}
+
+async function runStatus(args: string[]): Promise<void> {
+  if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
+    printStatusHelp();
+    return;
+  }
+
+  const projectRoot = optionValue(args, "--project-root") ?? process.cwd();
+  const specsDir = optionValue(args, "--specs-dir") ?? "specs";
+  const specs = await listSpecs({ projectRoot, specsDir });
+  console.log([
+    `${APP_NAME} status`,
+    "",
+    `Version: ${APP_VERSION}`,
+    `Project: ${specs.projectRoot}`,
+    `Specs: ${specs.specsDir}`,
+    "",
+    "Workflow State:",
+    `  active specs: ${specs.active.length}`,
+    `  todo specs: ${specs.todo.length}`,
+    `  review specs: ${specs.review.length}`,
+    `  done specs: ${specs.done.length}`,
+    "",
+    `Next Step: ${statusNextStep({ active: specs.active.length, todo: specs.todo.length, review: specs.review.length })}`
+  ].join("\n"));
 }
 
 async function runInit(): Promise<void> {
@@ -165,6 +212,10 @@ export async function runCli(argv = process.argv): Promise<void> {
   }
   if (command === "init") {
     await runInit();
+    return;
+  }
+  if (command === "status") {
+    await runStatus(argv.slice(3));
     return;
   }
   if (command === "bootstrap") {

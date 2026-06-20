@@ -492,9 +492,41 @@ try {
   if (!helpLines.join("\n").includes("specc bootstrap")) {
     throw new Error("Expected CLI help to mention bootstrap command.");
   }
+  if (!helpLines.join("\n").includes("specc status")) {
+    throw new Error("Expected CLI help to mention status command.");
+  }
   if (!helpLines.join("\n").includes("specc bootstrap --help")) {
     throw new Error("Expected CLI help to mention bootstrap command help.");
   }
+
+  const cliStatusEmptyRoot = await mkdtemp(path.join(os.tmpdir(), "spec-coding-cli-status-empty-"));
+  const emptyStatusLines: string[] = [];
+  console.log = (...args: unknown[]) => {
+    emptyStatusLines.push(args.map(String).join(" "));
+  };
+  try {
+    await runCli(["node", "specc", "status", "--project-root", cliStatusEmptyRoot]);
+  } finally {
+    console.log = originalLog;
+  }
+  const emptyStatusText = emptyStatusLines.join("\n");
+  if (!emptyStatusText.includes("Version:") || !emptyStatusText.includes("active specs: 0") || !emptyStatusText.includes("Next Step: Run specc bootstrap")) {
+    throw new Error(`Expected empty CLI status to recommend bootstrap, got: ${emptyStatusText}`);
+  }
+  const statusHelpLines: string[] = [];
+  console.log = (...args: unknown[]) => {
+    statusHelpLines.push(args.map(String).join(" "));
+  };
+  try {
+    await runCli(["node", "specc", "status", "--project-root", cliStatusEmptyRoot, "--help"]);
+  } finally {
+    console.log = originalLog;
+  }
+  const statusHelpText = statusHelpLines.join("\n");
+  if (!statusHelpText.includes("specc status [options]") || !statusHelpText.includes("--specs-dir <path>")) {
+    throw new Error(`Expected status help to describe options, got: ${statusHelpText}`);
+  }
+  await rm(cliStatusEmptyRoot, { recursive: true, force: true });
 
   const cliBootstrapHelpRoot = await mkdtemp(path.join(os.tmpdir(), "spec-coding-cli-bootstrap-help-"));
   const bootstrapHelpLines: string[] = [];
@@ -540,6 +572,19 @@ try {
   const cliSpecs = await listSpecs({ projectRoot: cliBootstrapRoot, specsDir: "specs" });
   if (!bootstrapLines.join("\n").includes("Spec Coding 项目引导完成") || !cliAgentsText.includes("Current Task Protocol") || cliSpecs.active.length !== 1) {
     throw new Error("Expected CLI bootstrap to generate AGENTS.md and a starter active spec.");
+  }
+  const activeStatusLines: string[] = [];
+  console.log = (...args: unknown[]) => {
+    activeStatusLines.push(args.map(String).join(" "));
+  };
+  try {
+    await runCli(["node", "specc", "status", "--project-root", cliBootstrapRoot]);
+  } finally {
+    console.log = originalLog;
+  }
+  const activeStatusText = activeStatusLines.join("\n");
+  if (!activeStatusText.includes("active specs: 1") || !activeStatusText.includes("Next Step: Call spec_context")) {
+    throw new Error(`Expected active CLI status to recommend spec_context, got: ${activeStatusText}`);
   }
   await rm(cliBootstrapRoot, { recursive: true, force: true });
 
