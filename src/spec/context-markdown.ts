@@ -16,7 +16,7 @@ export function buildContextInstructions(): string[] {
 function renderSelectedSpecs(selectedSpecs: Array<SpecItem & { text: string }>): string[] {
   return selectedSpecs.length
     ? selectedSpecs.map((spec, index) => [`### ${index + 1}. ${spec.file}`, "", "```md", spec.text, "```"].join("\n"))
-    : ["当前没有可执行任务：请先调用 spec_todo/spec_create，或把已有 spec 移到 active/ 或 todo/。"];
+    : ["当前没有可执行任务：优先调用 spec_bootstrap 建立项目入口；如果用户已经给出明确小任务或功能需求，再调用 spec_todo/spec_create。"];
 }
 
 function renderTodoLines(todos: SpecContext["todos"], hasSelectedSpecs: boolean): string[] {

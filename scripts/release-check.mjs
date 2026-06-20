@@ -52,6 +52,7 @@ function assertDocumentationContract(readmeText, agentsText) {
     "src/templates/prompt-protocol.ts",
     "Recommended Next Step",
     "Workflow State",
+    "空任务状态优先推荐 `spec_bootstrap`",
     "当前 Spec Coding MCP 版本号",
     "可安全推导的上下文值",
     "不替模型编造 prompt、title 或行为记录",

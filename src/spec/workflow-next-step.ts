@@ -42,11 +42,11 @@ function inspectWorkflowRecommendation(state: WorkflowState): WorkflowRecommenda
   if (!hasAnyWorkItem(state)) {
     return {
       nextTool: "spec_bootstrap",
-      alternatives: [],
+      alternatives: ["spec_todo", "spec_create"],
       arguments: { ...projectArguments(state), projectKind: "auto" },
       reason: "当前没有 review、active、todo 或 selected spec，需要先建立项目入口。",
       when: "项目首次接入或 specs 尚未初始化时。",
-      afterwards: "bootstrap 后调用 `spec_context`，再开始实现。"
+      afterwards: "bootstrap 后调用 `spec_context`；用户已经给出明确小任务时可改用 `spec_todo`，明确功能需求时可改用 `spec_create`。"
     };
   }
 
@@ -86,11 +86,11 @@ function contextWorkflowRecommendation(state: WorkflowState): WorkflowRecommenda
   if (!state.selectedSpecs.length && !state.openTodos.length && !state.activeSpecs.length && !state.todoSpecs.length && !state.reviewSpecs.length) {
     return {
       nextTool: "spec_bootstrap",
-      alternatives: [],
+      alternatives: ["spec_todo", "spec_create"],
       arguments: { ...projectArguments(state), projectKind: "auto" },
       reason: "当前没有可执行任务，不能直接实现代码。",
       when: "没有 selected spec、open TODO、active、todo 或 review 时。",
-      afterwards: "生成 AGENTS、specs 和可执行入口后，再调用 `spec_context`。"
+      afterwards: "优先生成 AGENTS、specs 和可执行入口后再调用 `spec_context`；用户已经给出明确小任务时可改用 `spec_todo`，明确功能需求时可改用 `spec_create`。"
     };
   }
 

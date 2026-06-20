@@ -96,10 +96,12 @@ try {
     "当前没有可执行任务",
     "Recommended Next Step",
     "nextTool: `spec_bootstrap`",
+    "alternatives: `spec_todo`, `spec_create`",
     "arguments:",
     `"projectRoot":"${emptyWorkflowRoot.replace(/\\/g, "\\\\")}"`,
     "\"projectKind\":\"auto\"",
-    "当前没有可执行任务，不能直接实现代码"
+    "当前没有可执行任务，不能直接实现代码",
+    "优先生成 AGENTS、specs 和可执行入口"
   ], "Expected empty spec_context to render a structured next step instead of stopping at a warning");
   await rm(emptyWorkflowRoot, { recursive: true, force: true });
 

@@ -156,7 +156,7 @@ specs/
 
 `spec_context` 默认使用 `contextMode: "workflow"`，只输出任务流程、spec/TODO 和约束。需要源码线索时显式传入 `contextMode: "hints"`；需要完整源码扫描线索时再使用 `contextMode: "full"`。这些线索只是搜索入口，不是事实来源，模型修改前必须自行读取相关文件确认。
 
-`spec_list` 和 `spec_context` 都会输出 `Recommended Next Step`，但语义不同：`spec_list` 属于 inspect 阶段，通常推荐下一步先读取 `spec_context`；`spec_context` 属于执行前上下文阶段，才推荐执行 TODO、补全 review、实现 active spec 或记录结果。即使当前没有 active、todo、review 或 selected spec，`spec_context` 也必须输出结构化下一步推荐，而不是只提示“不要开始实现”。推荐会固定包含 `nextTool`、`alternatives`、`arguments`、`reason`、`when` 和 `afterwards`。`nextTool` 始终是单一工具 ID；`arguments` 只放可安全推导的上下文值或占位说明，不替模型编造 prompt、title 或行为记录。模型应优先执行 `nextTool`，只有用户明确要求或条件不满足时才考虑 `alternatives`。
+`spec_list` 和 `spec_context` 都会输出 `Recommended Next Step`，但语义不同：`spec_list` 属于 inspect 阶段，通常推荐下一步先读取 `spec_context`；`spec_context` 属于执行前上下文阶段，才推荐执行 TODO、补全 review、实现 active spec 或记录结果。即使当前没有 active、todo、review 或 selected spec，`spec_context` 也必须输出结构化下一步推荐，而不是只提示“不要开始实现”。空任务状态优先推荐 `spec_bootstrap` 建立项目入口，并把 `spec_todo`、`spec_create` 作为用户已给出明确任务时的备选。推荐会固定包含 `nextTool`、`alternatives`、`arguments`、`reason`、`when` 和 `afterwards`。`nextTool` 始终是单一工具 ID；`arguments` 只放可安全推导的上下文值或占位说明，不替模型编造 prompt、title 或行为记录。模型应优先执行 `nextTool`，只有用户明确要求或条件不满足时才考虑 `alternatives`。
 
 `spec_list` 和 `spec_context` 的输出头部会显示当前 Spec Coding MCP 版本号。版本号来自 `src/shared/meta.ts` 读取的 `package.json`，用于判断当前运行中的 MCP 服务是否已经重启或更新到最新构建。
 
