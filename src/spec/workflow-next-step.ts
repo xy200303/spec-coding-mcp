@@ -62,6 +62,17 @@ function inspectWorkflowRecommendation(state: WorkflowState): WorkflowRecommenda
     };
   }
 
+  if (state.openTodos.length) {
+    return {
+      nextTool: "spec_context",
+      alternatives: [],
+      arguments: projectArguments(state),
+      reason: "当前有 open TODO，必须先读取上下文并按 TODO 顺序执行。",
+      when: "只查看了 `spec_list` 或 `specc status`，还没有读取本轮 `spec_context` 时。",
+      afterwards: "调用 `spec_context` 后按 open TODO 自上而下执行，并用 `spec_checkpoint` 记录完成情况。"
+    };
+  }
+
   if (state.activeSpecs.length || state.todoSpecs.length) {
     return {
       nextTool: "spec_context",

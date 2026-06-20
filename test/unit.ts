@@ -209,6 +209,13 @@ async function testStatusRecommendationDecisions(): Promise<void> {
   assert(active.nextTool === "spec_context", "Expected active status to recommend spec_context.");
   assert(Object.keys(active.arguments).join(",") === "projectRoot,specsDir", "Expected spec_context recommendation to keep minimal arguments.");
 
+  const reviewOnly = decideStatusRecommendation({
+    ...base,
+    workflowState: { active: 0, todo: 0, review: 1, done: 0, openTodos: 0 }
+  });
+  assert(reviewOnly.nextTool === "spec_context", "Expected review-only status to recommend spec_context.");
+  assert(reviewOnly.arguments.files === "review-1.md", "Expected review-only status to reuse workflow review arguments.");
+
   const openTodo = decideStatusRecommendation({
     ...base,
     workflowState: { active: 1, todo: 0, review: 0, done: 0, openTodos: 2 }
