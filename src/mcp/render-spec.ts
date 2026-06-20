@@ -2,6 +2,18 @@
 import type { AgentFileResult, ReviewResult, SpecItem, SpecResult } from "../spec/types.js";
 import { code, fileStatus } from "./render-core.js";
 
+const DEFAULT_LIST_LIMIT = 20;
+
+function limitedLines<T>(items: T[], render: (item: T) => string, empty: string, limit = DEFAULT_LIST_LIMIT): string[] {
+  const visibleItems = items.slice(0, limit);
+  const hiddenCount = items.length - visibleItems.length;
+  if (!visibleItems.length) return [empty];
+  return [
+    ...visibleItems.map(render),
+    ...(hiddenCount > 0 ? [`- 其余 ${hiddenCount} 项未展开；需要详情请读取对应文件或目录。`] : [])
+  ];
+}
+
 export function renderSpecResult(title: string, result: SpecResult): string {
   const created = result.files.filter((file) => file.status === "created").length;
   const updated = result.files.filter((file) => file.status === "updated").length;
@@ -15,12 +27,11 @@ export function renderSpecResult(title: string, result: SpecResult): string {
     "",
     "## 文件",
     "",
-    ...(result.files.length ? result.files.slice(0, 100).map(fileStatus) : ["- 无文件变更"]),
-    result.files.length > 100 ? `- 其余 ${result.files.length - 100} 个文件未展开。` : "",
+    ...limitedLines(result.files, fileStatus, "- 无文件变更"),
     "",
     "## Specs",
     "",
-    ...(result.specs.length ? result.specs.map((file) => `- ${code(file)}`) : ["- 无"]),
+    ...limitedLines(result.specs, (file) => `- ${code(file)}`, "- 无"),
     "",
     "## 下一步",
     "",
@@ -28,13 +39,16 @@ export function renderSpecResult(title: string, result: SpecResult): string {
   ].filter(Boolean).join("\n");
 }
 
-export function renderSpecItems(title: string, items: SpecItem[]): string[] {
+export function renderSpecItems(title: string, items: SpecItem[], limit = DEFAULT_LIST_LIMIT): string[] {
+  const visibleItems = items.slice(0, limit);
+  const hiddenCount = items.length - visibleItems.length;
   return [
     `## ${title}`,
     "",
-    ...(items.length
-      ? items.map((item) => `- ${code(item.file)}：${item.title}（status: ${item.status}, source: ${item.source}）`)
-      : ["- 无"])
+    ...(visibleItems.length
+      ? visibleItems.map((item) => `- ${code(item.file)}：${item.title}（status: ${item.status}, source: ${item.source}）`)
+      : ["- 无"]),
+    ...(hiddenCount > 0 ? [`- 其余 ${hiddenCount} 个未展开；需要详情请读取对应 specs 目录。`] : [])
   ];
 }
 
@@ -47,29 +61,27 @@ export function renderReviewResult(title: string, result: ReviewResult): string 
     "",
     "## Completed TODOs",
     "",
-    ...(result.completedTodos.length ? result.completedTodos.map((item) => `- ${item}`) : ["- 无"]),
+    ...limitedLines(result.completedTodos, (item) => `- ${item}`, "- 无"),
     "",
     "## Incomplete TODOs",
     "",
-    ...(result.incompleteTodos.length ? result.incompleteTodos.map((item) => `- ${item}`) : ["- 无"]),
+    ...limitedLines(result.incompleteTodos, (item) => `- ${item}`, "- 无"),
     "",
     "## Changed Files",
     "",
-    ...(result.changedFiles.length ? result.changedFiles.map((item) => `- \`${item}\``) : ["- 未记录"]),
+    ...limitedLines(result.changedFiles, (item) => `- \`${item}\``, "- 未记录"),
     "",
     "## Verification",
     "",
-    ...(result.verification.length
-      ? result.verification.map((item) => `- ${item.status} \`${item.command}\`${item.note ? `（${item.note}）` : ""}`)
-      : ["- 无"]),
+    ...limitedLines(result.verification, (item) => `- ${item.status} \`${item.command}\`${item.note ? `（${item.note}）` : ""}`, "- 无"),
     "",
     "## Risks",
     "",
-    ...(result.risks.length ? result.risks.map((item) => `- ${item}`) : ["- 无"]),
+    ...limitedLines(result.risks, (item) => `- ${item}`, "- 无"),
     "",
     "## Blockers",
     "",
-    ...(result.blockers.length ? result.blockers.map((item) => `- ${item}`) : ["- 无"])
+    ...limitedLines(result.blockers, (item) => `- ${item}`, "- 无")
   ].join("\n");
 }
 
@@ -82,7 +94,7 @@ export function renderAgentFileResult(title: string, result: AgentFileResult): s
     "",
     "## 文件",
     "",
-    ...(result.files.length ? result.files.map(fileStatus) : ["- 无文件变更"]),
+    ...limitedLines(result.files, fileStatus, "- 无文件变更"),
     "",
     "## 下一步",
     "",

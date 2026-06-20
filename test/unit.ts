@@ -12,6 +12,7 @@ import { createSessionGuard, SPEC_CONTEXT_REQUIRED_MESSAGE, markSpecContextSeen,
 import { CLI_HELP_LINES, MCP_DIST_ENTRY, MCP_SERVER_NAME, MCP_START_COMMAND, SUPPORTED_TOOL_IDS } from "../src/cli/compatibility-contract.js";
 import { serverCommand, upsertCodexConfig, upsertContinueConfig, upsertJsonMcpServers, upsertOpenCodeConfig } from "../src/cli/registry-write.js";
 import { STATUS_JSON_SCHEMA_VERSION, decideStatusRecommendation } from "../src/cli/status-recommendation.js";
+import { renderSpecResult } from "../src/mcp/render-spec.js";
 
 function assert(condition: boolean, message: string): void {
   if (!condition) {
@@ -131,7 +132,31 @@ async function testDoneWriterAvoidsOverwrites(): Promise<void> {
     const existingDoneFile = path.join(root, "specs", "done", "demo.md");
     await mkdir(path.dirname(todoFile), { recursive: true });
     await mkdir(path.dirname(existingDoneFile), { recursive: true });
-    await writeFile(todoFile, "# New Demo\n\n## Meta\n\n- status: todo\n- source: user-prompt\n", "utf8");
+    await writeFile(todoFile, [
+      "# New Demo",
+      "",
+      "## Meta",
+      "",
+      "- status: todo",
+      "- source: user-prompt",
+      "",
+      "## 目标",
+      "",
+      "保留真实业务目标。",
+      "",
+      "## 执行要求",
+      "",
+      "- 开始前必须先调用 spec_context。",
+      "",
+      "## 工程质量约束",
+      "",
+      "- KISS。",
+      "",
+      "## Checkpoint",
+      "",
+      "- summary: 过程记录不进入 done。",
+      ""
+    ].join("\n"), "utf8");
     await writeFile(existingDoneFile, "# Existing Demo\n", "utf8");
 
     const result = await markSpecDone({
@@ -152,14 +177,33 @@ async function testDoneWriterAvoidsOverwrites(): Promise<void> {
     assert(existingDoneText === "# Existing Demo\n", "Expected existing done spec to be preserved.");
     assertIncludes(archivedText, "# New Demo", "Expected new done spec to use a collision-free name.");
     assertIncludes(archivedText, "- status: done", "Expected archived spec meta status to be done.");
+    assertIncludes(archivedText, "保留真实业务目标。", "Expected archived spec to keep business content.");
     assertIncludes(archivedText, "## 最终行为契约", "Expected archived spec to include final behavior contract.");
     assertIncludes(archivedText, "未传配置", "Expected archived spec to preserve behavior condition.");
     assertIncludes(archivedText, "使用系统默认值", "Expected archived spec to preserve behavior result.");
+    assert(!archivedText.includes("## 执行要求"), "Expected archived spec to omit execution template noise.");
+    assert(!archivedText.includes("## 工程质量约束"), "Expected archived spec to omit engineering template noise.");
+    assert(!archivedText.includes("## Checkpoint"), "Expected archived spec to omit checkpoint history.");
     assert(result.nextSteps.some((step) => step.includes("最终行为契约已记录")), "Expected done result to confirm behavior contract.");
     assert(result.specs[0] === "specs/done/demo-2.md", "Expected result to report collision-free done path.");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+}
+
+function testRendererLimitsToolOutput(): void {
+  const files = Array.from({ length: 25 }, (_, index) => ({ path: `specs/done/demo-${index}.md`, status: "created" as const }));
+  const specs = files.map((file) => file.path);
+  const text = renderSpecResult("Many Files", {
+    projectRoot: "C:/demo",
+    specsDir: "specs",
+    files,
+    specs,
+    nextSteps: ["读取对应文件查看详情。"]
+  });
+
+  assertIncludes(text, "其余 5 项未展开", "Expected tool result renderer to limit long file lists.");
+  assert(!text.includes("demo-24.md"), "Expected hidden file entries to stay out of tool output.");
 }
 
 async function testRegistryContracts(): Promise<void> {
@@ -254,6 +298,7 @@ await testTodoSpecTaskExtraction();
 await testCheckpointWriter();
 await testSessionGuard();
 await testDoneWriterAvoidsOverwrites();
+testRendererLimitsToolOutput();
 await testRegistryContracts();
 await testStatusRecommendationDecisions();
 

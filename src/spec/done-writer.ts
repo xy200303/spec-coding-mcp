@@ -24,6 +24,33 @@ function markArchivedStatus(text: string): string {
   return text;
 }
 
+const doneArchiveExcludedSections = new Set([
+  "## 执行要求",
+  "## 工程质量约束",
+  "## 业务不确定性强制确认",
+  "## Checkpoint",
+  "## Done",
+  "## 最终行为契约"
+]);
+
+function isTopLevelSection(line: string): boolean {
+  return line.startsWith("## ") && !line.startsWith("### ");
+}
+
+function cleanDoneArchiveText(text: string): string {
+  const output: string[] = [];
+  let shouldKeepSection = true;
+
+  for (const line of text.split(/\r?\n/)) {
+    if (isTopLevelSection(line)) {
+      shouldKeepSection = !doneArchiveExcludedSections.has(line);
+    }
+    if (shouldKeepSection) output.push(line);
+  }
+
+  return output.join("\n").trimEnd();
+}
+
 export async function markSpecDone(input: { projectRoot: string; specsDir?: string; file: string; note?: string; behaviorRecords?: BehaviorRecord[] }): Promise<SpecResult> {
   const root = input.projectRoot;
   const specsDir = input.specsDir ?? "specs";
@@ -31,7 +58,7 @@ export async function markSpecDone(input: { projectRoot: string; specsDir?: stri
   const doneDir = path.join(root, specsDir, "done");
   await fs.mkdir(doneDir, { recursive: true });
   const target = await unusedDoneFile(doneDir, path.basename(source));
-  const text = markArchivedStatus(await fs.readFile(source, "utf8"));
+  const text = cleanDoneArchiveText(markArchivedStatus(await fs.readFile(source, "utf8")));
   const doneText = [
     text.trimEnd(),
     "",

@@ -1,6 +1,5 @@
 /* Markdown rendering helpers for spec context assembly. */
 import type { ContextMode, SourceScanSummary, SpecContext, SpecItem } from "./types.js";
-import { businessConfirmationBullets, engineeringRuleSections } from "../templates/markdown.js";
 import { currentTaskInstructions } from "../templates/prompt-protocol.js";
 import { workflowRecommendationLines } from "./workflow-next-step.js";
 import { APP_VERSION } from "../shared/meta.js";
@@ -12,6 +11,27 @@ function withFallbackLines(items: string[], empty: string): string[] {
 export function buildContextInstructions(): string[] {
   return currentTaskInstructions;
 }
+
+const compactEngineeringRules = [
+  "- 执行前先读 selected specs 和 open TODOs；不要按旧对话扩范围。",
+  "- 遵守 Fail Fast、风险先确认、成熟库优先、小步修改和测试优先。",
+  "- 代码保持简单、显式、人类可读；避免无收益抽象和无关重构。",
+  "- 完整工程规则见 `AGENTS.md`；本工具不展开长规则。"
+];
+
+const compactBusinessRules = [
+  "- 金额、状态机、并发、幂等、退款、权限、合规等不明确时必须先问用户。",
+  "- 禁止猜业务规则或用常识补边界；说明疑点并给出 2 到 3 种解释。",
+  "- 完整业务确认规则见 `AGENTS.md`；本工具不展开长规则。"
+];
+
+const compactTaskInstructions = [
+  "先读本次 `spec_context`；没有上下文不得实现或改文档。",
+  "按 open TODOs 自上而下执行；无 TODO 时按 selected spec 的目标和验收标准执行。",
+  "源码线索只是搜索入口，修改前必须自行读取相关文件确认。",
+  "风险或业务规则不明确时先问用户，不要猜。",
+  "阶段完成后调用 `spec_checkpoint`；全部完成且验证通过后调用 `spec_done`。"
+];
 
 type EmptyWorkState = "done-only" | "empty" | "has-work";
 
@@ -35,9 +55,37 @@ function renderEmptySelectedSpecs(state: EmptyWorkState): string[] {
   return ["当前没有可执行任务：优先调用 spec_bootstrap 建立项目入口；如果用户已经给出明确小任务或功能需求，再调用 spec_todo/spec_create。"];
 }
 
-function renderSelectedSpecs(selectedSpecs: Array<SpecItem & { text: string }>, state: EmptyWorkState): string[] {
+function isSecondLevelHeading(line: string): boolean {
+  return line.startsWith("## ") && !line.startsWith("### ");
+}
+
+function selectedSpecHeadings(text: string, limit: number): string[] {
+  return text
+    .split(/\r?\n/)
+    .filter(isSecondLevelHeading)
+    .filter((line) => !["## 执行要求", "## 工程质量约束", "## 业务不确定性强制确认", "## Checkpoint", "## Done"].includes(line))
+    .slice(0, limit);
+}
+
+function selectedSpecSummaryLines(spec: SpecItem & { text: string }, index: number, mode: ContextMode): string[] {
+  const headingLimit = mode === "full" ? 16 : 8;
+  const headings = selectedSpecHeadings(spec.text, headingLimit);
+  return [
+    `### ${index + 1}. ${spec.title}`,
+    "",
+    `- file: \`${spec.file}\``,
+    `- status: \`${spec.status}\``,
+    `- source: \`${spec.source}\``,
+    "- content: 未内嵌；需要完整内容时请用读文件工具打开上面的 file。",
+    "- sections:",
+    ...withFallbackLines(headings.map((heading) => `  - ${heading.replace(/^##\s+/, "")}`), "  - 未识别到章节标题"),
+    ""
+  ];
+}
+
+function renderSelectedSpecs(selectedSpecs: Array<SpecItem & { text: string }>, state: EmptyWorkState, mode: ContextMode): string[] {
   if (!selectedSpecs.length) return renderEmptySelectedSpecs(state);
-  return selectedSpecs.map((spec, index) => [`### ${index + 1}. ${spec.file}`, "", "```md", spec.text, "```"].join("\n"));
+  return selectedSpecs.flatMap((spec, index) => selectedSpecSummaryLines(spec, index, mode));
 }
 
 function renderTodoLines(todos: SpecContext["todos"], hasSelectedSpecs: boolean, state: EmptyWorkState): string[] {
@@ -150,6 +198,22 @@ function renderSourceHintsSection(source: SourceScanSummary | undefined, mode: C
   ];
 }
 
+function renderEngineeringRules(mode: ContextMode): string[] {
+  void mode;
+  return compactEngineeringRules;
+}
+
+function renderBusinessRules(mode: ContextMode): string[] {
+  void mode;
+  return compactBusinessRules;
+}
+
+function renderTaskInstructions(mode: ContextMode, instructions: string[]): string[] {
+  void mode;
+  void instructions;
+  return compactTaskInstructions.map((item) => `- ${item}`);
+}
+
 export function buildSpecContextMarkdown(input: {
   root: string;
   specsDir: string;
@@ -195,7 +259,7 @@ export function buildSpecContextMarkdown(input: {
     ...renderRequestedSpecs(input.requestedSpecs),
     "## Selected Specs",
     "",
-    ...renderSelectedSpecs(input.selectedSpecs, workState),
+    ...renderSelectedSpecs(input.selectedSpecs, workState, input.contextMode),
     "",
     "## Open TODOs",
     "",
@@ -217,16 +281,16 @@ export function buildSpecContextMarkdown(input: {
     "",
     "## Engineering Constraints",
     "",
-    ...engineeringRuleSections(),
+    ...renderEngineeringRules(input.contextMode),
     "",
     "## Business Confirmation Rules",
     "",
-    ...businessConfirmationBullets(),
+    ...renderBusinessRules(input.contextMode),
     "",
     ...renderSuggestedSearchTargets(input.candidateFiles, input.contextMode),
     ...renderSourceHintsSection(input.source, input.contextMode),
     "## Current Task Protocol",
     "",
-    ...input.instructions.map((item) => `- ${item}`)
+    ...renderTaskInstructions(input.contextMode, input.instructions)
   ].join("\n");
 }

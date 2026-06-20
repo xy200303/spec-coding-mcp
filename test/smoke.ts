@@ -218,8 +218,8 @@ try {
     "done specs:",
     "selected specs:",
     "open TODOs: 0",
+    "content: 未内嵌；需要完整内容时请用读文件工具打开上面的 file。",
     "source-review/needs-ai-summary",
-    "它不是业务结论，只是交给 AI 阅读源码的任务单",
     "未发现未完成 TODO；请按 selected specs 的目标、行为规则和验收标准执行。",
     "Recommended Next Step",
     "nextTool: `spec_create`",
@@ -293,6 +293,24 @@ try {
     throw new Error("Expected done-only spec_context to avoid empty-project bootstrap guidance.");
   }
   await rm(doneOnlyWorkflowRoot, { recursive: true, force: true });
+
+  const manyDoneRoot = await mkdtemp(path.join(os.tmpdir(), "spec-coding-many-done-"));
+  await mkdir(path.join(manyDoneRoot, "specs", "done"), { recursive: true });
+  for (let index = 0; index < 25; index += 1) {
+    await writeFile(path.join(manyDoneRoot, "specs", "done", `finished-${String(index).padStart(2, "0")}.md`), `# Finished ${index}\n\n## Meta\n\n- status: done\n`, "utf8");
+  }
+  const manyDoneList = await harness.call("spec_list", { projectRoot: manyDoneRoot, specsDir: "specs" });
+  const manyDoneText = manyDoneList.content[0]?.text ?? "";
+  assertIncludesAll(manyDoneText, [
+    "done specs: 25",
+    "finished-00.md",
+    "finished-19.md",
+    "其余 5 个未展开"
+  ], "Expected spec_list to limit large done history output");
+  if (manyDoneText.includes("finished-24.md")) {
+    throw new Error("Expected spec_list to keep older done paths out of the default response.");
+  }
+  await rm(manyDoneRoot, { recursive: true, force: true });
 
   const createdAfterContext = await harness.call("spec_create", {
     projectRoot: root,
@@ -426,6 +444,8 @@ try {
     "active specs: 1",
     "todo specs: 1",
     "selected specs: 2",
+    "content: 未内嵌；需要完整内容时请用读文件工具打开上面的 file。",
+    `file: \`${firstOpenTodoFile}\``,
     "open TODOs:",
     "Open TODOs",
     "Recommended Next Step",
@@ -439,16 +459,21 @@ try {
     "\"verification\":\"<commands and status>\"",
     "当前有 open TODO",
     "先读本次 `spec_context`；没有上下文不得实现或改文档。",
-    "selected specs 和 open TODOs 是唯一需求源，不按旧对话扩范围。",
     "Engineering Constraints",
+    "完整工程规则见 `AGENTS.md`",
     "Business Confirmation Rules",
+    "完整业务确认规则见 `AGENTS.md`",
     "Current Task Protocol",
     "Context mode：`workflow`",
-    ...engineeringConstraintBullets(),
-    ...businessConfirmationBullets(),
-    ...currentTaskInstructionBullets(),
-    "高风险业务描述不完整时，停止实现"
-  ], "Expected spec context to include required engineering constraints");
+    "按 open TODOs 自上而下执行",
+    "阶段完成后调用 `spec_checkpoint`"
+  ], "Expected workflow spec context to include compact engineering guidance");
+  if (engineeringConstraintBullets().every((item) => context.markdown.includes(item)) || currentTaskInstructionBullets().every((item) => context.markdown.includes(item))) {
+    throw new Error("Expected workflow mode to avoid expanding every engineering rule and protocol line.");
+  }
+  if (context.markdown.includes("```md") || context.markdown.includes("## 执行要求")) {
+    throw new Error("Expected workflow mode to render selected specs as an index instead of embedded markdown.");
+  }
   if (context.markdown.includes("Source Signals") || context.markdown.includes("Suggested Search Targets")) {
     throw new Error("Expected workflow mode to omit source scan and search target output.");
   }
@@ -456,12 +481,23 @@ try {
   const contextWithHints = await specContext({ projectRoot: root, specsDir: "specs", contextMode: "full" });
   assertIncludesAll(contextWithHints.markdown, [
     "Context mode：`full`",
+    "content: 未内嵌；需要完整内容时请用读文件工具打开上面的 file。",
     "Source Signals",
     "Suggested Search Targets",
     "这些条目只是搜索线索，不是源码事实",
     "Source Hints",
-    "package scripts"
-  ], "Expected full spec context to include source hints as non-authoritative search targets");
+    "package scripts",
+    "完整工程规则见 `AGENTS.md`",
+    "完整业务确认规则见 `AGENTS.md`"
+  ], "Expected full spec context to include expanded indexes without embedding full documents");
+  if (
+    contextWithHints.markdown.includes("```md") ||
+    contextWithHints.markdown.includes("## 执行要求") ||
+    engineeringConstraintBullets().every((item) => contextWithHints.markdown.includes(item)) ||
+    currentTaskInstructionBullets().every((item) => contextWithHints.markdown.includes(item))
+  ) {
+    throw new Error("Expected full mode to keep spec contents and long rule templates out of the MCP context.");
+  }
 
   const checkpoint = await recordSpecCheckpoint({
     projectRoot: root,
