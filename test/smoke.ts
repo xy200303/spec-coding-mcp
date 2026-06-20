@@ -297,7 +297,14 @@ try {
     projectRoot: root,
     specsDir: "specs",
     title: "用户详情 TODO",
-    prompt: "补充禁用态字段\n更新用户详情测试"
+    prompt: [
+      "目标：",
+      "- 补充禁用态字段",
+      "- 更新用户详情测试",
+      "验收：",
+      "- `bun run build` 通过。",
+      "- [x] 已确认不需要迁移"
+    ].join("\n")
   });
   if (!todo.specs[0]?.includes("specs/todo")) {
     throw new Error("Expected prompt-created TODO under specs/todo.");
@@ -307,8 +314,14 @@ try {
     "## 实际行为记录",
     "分支条件",
     "默认参数行为",
-    "边界处理结果"
+    "边界处理结果",
+    "- [ ] 补充禁用态字段",
+    "- [ ] 更新用户详情测试",
+    "- [x] 已确认不需要迁移"
   ], "Expected TODO spec template to guide final behavior recording");
+  if (todoSpecText.includes("- [ ] 目标：") || todoSpecText.includes("- [ ] 验收：") || todoSpecText.includes("- [ ] `bun run build` 通过。")) {
+    throw new Error("Expected TODO spec generation to skip section titles and verification commands.");
+  }
 
   const listed = await listSpecs({ projectRoot: root, specsDir: "specs" });
   if (listed.active.length !== 1 || listed.todo.length !== 1 || listed.review.length === 0) {

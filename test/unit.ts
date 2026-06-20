@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { APP_VERSION } from "../src/shared/meta.js";
+import { todoSpec } from "../src/templates/prompt-documents.js";
 import { recordSpecCheckpoint } from "../src/spec/checkpoint-writer.js";
 import { markSpecDone } from "../src/spec/done-writer.js";
 import { extractTodos, markCompletedTodos } from "../src/spec/todo-files.js";
@@ -36,6 +37,31 @@ async function testTodoParsing(): Promise<void> {
   assertIncludes(marked.text, "- [x] 补充字段", "Expected matched TODO to be checked.");
   assertIncludes(marked.text, "- [ ] 更新测试", "Expected unmatched TODO to stay open.");
   assert(marked.matched.length === 1, "Expected exactly one matched TODO.");
+}
+
+async function testTodoSpecTaskExtraction(): Promise<void> {
+  const text = todoSpec("优化任务提取", [
+    "优化 spec_todo 任务提取质量。",
+    "",
+    "目标：",
+    "- 过滤结构标题。",
+    "- 保留真正任务。",
+    "- `bun run build` 通过。",
+    "",
+    "验收：",
+    "- [x] 已完成的用户任务",
+    "- [ ] 未完成的用户任务",
+    "- `git diff --check` 通过。"
+  ].join("\n"));
+
+  assertIncludes(text, "- [ ] 过滤结构标题。", "Expected actionable bullet to become TODO.");
+  assertIncludes(text, "- [ ] 保留真正任务。", "Expected actionable bullet to stay in TODO.");
+  assertIncludes(text, "- [x] 已完成的用户任务", "Expected checked user TODO to stay checked.");
+  assertIncludes(text, "- [ ] 未完成的用户任务", "Expected unchecked user TODO to stay unchecked.");
+  assert(!text.includes("- [ ] 目标："), "Expected section title to stay out of generated TODOs.");
+  assert(!text.includes("- [ ] 验收："), "Expected acceptance title to stay out of generated TODOs.");
+  assert(!text.includes("- [ ] `bun run build` 通过。"), "Expected verification command to stay out of generated TODOs.");
+  assert(!text.includes("- [ ] `git diff --check` 通过。"), "Expected git verification command to stay out of generated TODOs.");
 }
 
 async function testCheckpointWriter(): Promise<void> {
@@ -150,6 +176,7 @@ async function testRegistryContracts(): Promise<void> {
 }
 
 await testTodoParsing();
+await testTodoSpecTaskExtraction();
 await testCheckpointWriter();
 await testSessionGuard();
 await testDoneWriterAvoidsOverwrites();

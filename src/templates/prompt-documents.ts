@@ -1,6 +1,81 @@
 /* User prompt spec and TODO spec templates. */
 import { businessConfirmationSection, engineeringConstraintSection, workflowGuardSection } from "./markdown.js";
 
+const TODO_SECTION_TITLES = new Set([
+  "目标",
+  "验收",
+  "验收标准",
+  "实际行为记录",
+  "实际行为记录要求",
+  "验证",
+  "验证命令",
+  "执行要求",
+  "说明"
+]);
+
+interface PromptTodoTask {
+  text: string;
+  checked: boolean;
+}
+
+function cleanPromptBullet(line: string): string {
+  return line.trim().replace(/^[-*]\s*/, "");
+}
+
+function isMarkdownBullet(line: string): boolean {
+  return /^\s*[-*]\s+/.test(line);
+}
+
+function isMarkdownCheckbox(line: string): boolean {
+  return /^\s*[-*]\s+\[[ xX]\]\s+.+/.test(line);
+}
+
+function isCheckedMarkdownCheckbox(line: string): boolean {
+  return /^\s*[-*]\s+\[[xX]\]\s+.+/.test(line);
+}
+
+function checkboxText(line: string): string {
+  return cleanPromptBullet(line).replace(/^\[[ xX]\]\s*/, "").trim();
+}
+
+function isSectionTitle(line: string): boolean {
+  const title = line.replace(/[:：]\s*$/, "").trim();
+  return TODO_SECTION_TITLES.has(title);
+}
+
+function isVerificationCommand(line: string): boolean {
+  return /^`?(bun|npm|pnpm|yarn|node|git)\s+[^`]+`?\s*(通过|passed|pass)?[。.]?$/i.test(line);
+}
+
+function isActionableTodoLine(line: string): boolean {
+  if (!line) return false;
+  if (isSectionTitle(line)) return false;
+  if (isVerificationCommand(line)) return false;
+  return true;
+}
+
+function taskFromMarkdownLine(line: string): PromptTodoTask {
+  const text = isMarkdownCheckbox(line) ? checkboxText(line) : cleanPromptBullet(line).trim();
+  return { text, checked: isCheckedMarkdownCheckbox(line) };
+}
+
+function taskFromPlainLine(line: string): PromptTodoTask {
+  return { text: line.trim(), checked: false };
+}
+
+function todoTasksFromPrompt(prompt: string): PromptTodoTask[] {
+  const lines = prompt.split(/\r?\n/);
+  const markdownTasks = lines
+    .filter(isMarkdownBullet)
+    .map(taskFromMarkdownLine)
+    .filter((task) => isActionableTodoLine(task.text));
+  if (markdownTasks.length) return markdownTasks;
+
+  return lines
+    .map(taskFromPlainLine)
+    .filter((task) => isActionableTodoLine(task.text));
+}
+
 export function userPromptSpec(title: string, prompt: string): string {
   return [
     `# ${title}`,
@@ -69,10 +144,7 @@ export function userPromptSpec(title: string, prompt: string): string {
 }
 
 export function todoSpec(title: string, prompt: string): string {
-  const tasks = prompt
-    .split(/\r?\n/)
-    .map((line) => line.trim().replace(/^[-*]\s*/, "").replace(/^\[[ xX]\]\s*/, ""))
-    .filter(Boolean);
+  const tasks = todoTasksFromPrompt(prompt);
   return [
     `# ${title}`,
     "",
@@ -87,7 +159,7 @@ export function todoSpec(title: string, prompt: string): string {
     "",
     "## TODO",
     "",
-    ...(tasks.length ? tasks.map((task) => `- [ ] ${task}`) : ["- [ ] 待补充任务。"]),
+    ...(tasks.length ? tasks.map((task) => `- [${task.checked ? "x" : " "}] ${task.text}`) : ["- [ ] 待补充任务。"]),
     "",
     "## 执行要求",
     "",
