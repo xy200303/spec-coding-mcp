@@ -258,6 +258,40 @@ try {
     "unmatched: `missing-review.md`"
   ], "Expected spec_context to show partially unmatched requested files");
 
+  const longSpecRoot = await mkdtemp(path.join(os.tmpdir(), "spec-coding-long-spec-"));
+  await mkdir(path.join(longSpecRoot, "specs", "active"), { recursive: true });
+  const longSpecFile = path.join(longSpecRoot, "specs", "active", "long.md");
+  await writeFile(longSpecFile, [
+    "# Long Spec",
+    "",
+    "## Meta",
+    "",
+    "- status: active",
+    "- source: smoke",
+    "",
+    "## Long Body",
+    "",
+    "x".repeat(5000),
+    "",
+    "## Late TODO",
+    "",
+    "- [ ] 执行后半段 TODO"
+  ].join("\n"), "utf8");
+  const longSpecContext = await harness.call("spec_context", {
+    projectRoot: longSpecRoot,
+    specsDir: "specs",
+    maxSpecChars: 64
+  });
+  assertIncludesAll(longSpecContext.content[0]?.text ?? "", [
+    "Long Body",
+    "Late TODO",
+    "执行后半段 TODO"
+  ], "Expected spec_context to use complete spec content for headings and TODO extraction");
+  if ((longSpecContext.content[0]?.text ?? "").includes("x".repeat(100))) {
+    throw new Error("Expected spec_context to avoid embedding long spec body while reading it internally.");
+  }
+  await rm(longSpecRoot, { recursive: true, force: true });
+
   const doneOnlyWorkflowRoot = await mkdtemp(path.join(os.tmpdir(), "spec-coding-done-only-workflow-"));
   await mkdir(path.join(doneOnlyWorkflowRoot, "specs", "done"), { recursive: true });
   await writeFile(path.join(doneOnlyWorkflowRoot, "specs", "done", "finished.md"), "# Finished\n\n## Meta\n\n- status: done\n", "utf8");
