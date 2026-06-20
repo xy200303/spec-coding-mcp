@@ -229,6 +229,31 @@ try {
     "afterwards:"
   ], "Expected review-only spec_context to stop direct implementation and recommend creating an active spec");
 
+  const unmatchedContext = await harness.call("spec_context", {
+    projectRoot: root,
+    specsDir: "specs",
+    files: ["specs/active/not-found.md"]
+  });
+  assertIncludesAll(unmatchedContext.content[0]?.text ?? "", [
+    "Requested Specs",
+    "requested: `specs/active/not-found.md`",
+    "matched: 无",
+    "unmatched: `specs/active/not-found.md`",
+    "selected specs: 0"
+  ], "Expected spec_context to show unmatched requested files");
+
+  const partialContext = await harness.call("spec_context", {
+    projectRoot: root,
+    specsDir: "specs",
+    files: [generated.specs[0], "missing-review.md"]
+  });
+  assertIncludesAll(partialContext.content[0]?.text ?? "", [
+    "Requested Specs",
+    `requested: \`${generated.specs[0]}\`, \`missing-review.md\``,
+    `matched: \`${generated.specs[0]}\``,
+    "unmatched: `missing-review.md`"
+  ], "Expected spec_context to show partially unmatched requested files");
+
   const doneOnlyWorkflowRoot = await mkdtemp(path.join(os.tmpdir(), "spec-coding-done-only-workflow-"));
   await mkdir(path.join(doneOnlyWorkflowRoot, "specs", "done"), { recursive: true });
   await writeFile(path.join(doneOnlyWorkflowRoot, "specs", "done", "finished.md"), "# Finished\n\n## Meta\n\n- status: done\n", "utf8");

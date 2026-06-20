@@ -58,6 +58,18 @@ function renderCompletedTodoLines(todos: SpecContext["todos"]): string[] {
   return completed.length ? completed.map((todo) => `- ${todo.text}（${todo.file}:${todo.line}）`) : ["- 无"];
 }
 
+function renderRequestedSpecs(requestedSpecs: SpecContext["requestedSpecs"]): string[] {
+  if (!requestedSpecs.requested.length) return [];
+  return [
+    "## Requested Specs",
+    "",
+    `- requested: ${requestedSpecs.requested.length ? requestedSpecs.requested.map((file) => `\`${file}\``).join(", ") : "无"}`,
+    `- matched: ${requestedSpecs.matched.length ? requestedSpecs.matched.map((file) => `\`${file}\``).join(", ") : "无"}`,
+    `- unmatched: ${requestedSpecs.unmatched.length ? requestedSpecs.unmatched.map((file) => `\`${file}\``).join(", ") : "无"}`,
+    ""
+  ];
+}
+
 export function workflowStateLines(input: {
   activeCount: number;
   todoCount: number;
@@ -146,6 +158,7 @@ export function buildSpecContextMarkdown(input: {
   reviewSpecs: SpecItem[];
   todoSpecs: SpecItem[];
   doneSpecs: SpecItem[];
+  requestedSpecs: SpecContext["requestedSpecs"];
   selectedSpecs: Array<SpecItem & { text: string }>;
   todos: SpecContext["todos"];
   source?: SourceScanSummary;
@@ -179,6 +192,7 @@ export function buildSpecContextMarkdown(input: {
       openTodoCount: openTodos.length
     }),
     ...renderSourceSignals(input.source),
+    ...renderRequestedSpecs(input.requestedSpecs),
     "## Selected Specs",
     "",
     ...renderSelectedSpecs(input.selectedSpecs, workState),

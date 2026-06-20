@@ -94,6 +94,11 @@ export interface SpecContext {
   projectRoot: string;
   specsDir: string;
   contextMode: ContextMode;
+  requestedSpecs: {
+    requested: string[];
+    matched: string[];
+    unmatched: string[];
+  };
   source?: SourceScanSummary;
   activeSpecs: SpecItem[];
   reviewSpecs: SpecItem[];

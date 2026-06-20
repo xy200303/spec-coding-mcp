@@ -19,6 +19,12 @@ function selectRequestedSpecs(input: { requested: string[]; activeSpecs: SpecIte
     .filter((item) => input.requested.some((file) => item.file === file || item.file.endsWith(file)));
 }
 
+function requestedSpecSummary(requested: string[], selectedSpecs: SpecItem[]): SpecContext["requestedSpecs"] {
+  const matched = selectedSpecs.map((spec) => spec.file);
+  const unmatched = requested.filter((file) => !matched.some((matchedFile) => matchedFile === file || matchedFile.endsWith(file)));
+  return { requested, matched, unmatched };
+}
+
 export async function specContext(input: { projectRoot: string; specsDir?: string; files?: string[]; maxSpecChars?: number; candidateFileLimit?: number; contextMode?: ContextMode }): Promise<SpecContext> {
   const root = path.resolve(input.projectRoot);
   const specsDir = input.specsDir ?? "specs";
@@ -33,6 +39,7 @@ export async function specContext(input: { projectRoot: string; specsDir?: strin
     ? selectRequestedSpecs({ requested, activeSpecs, reviewSpecs, todoSpecs })
     : selectDefaultSpecs({ activeSpecs, reviewSpecs, todoSpecs });
   const selectedSpecs = await readSpecsWithText(root, selectedBase, maxSpecChars);
+  const requestedSpecs = requestedSpecSummary(requested, selectedSpecs);
   const todos = selectedSpecs.flatMap((spec) => extractTodos(spec.file, spec.text));
   const shouldIncludeSourceHints = contextMode !== "workflow";
   const candidateFiles = shouldIncludeSourceHints ? await findCandidateFiles(root, selectedSpecs, input.candidateFileLimit ?? 40) : [];
@@ -46,6 +53,7 @@ export async function specContext(input: { projectRoot: string; specsDir?: strin
     reviewSpecs,
     todoSpecs,
     doneSpecs,
+    requestedSpecs,
     selectedSpecs,
     todos,
     source,
@@ -60,6 +68,7 @@ export async function specContext(input: { projectRoot: string; specsDir?: strin
     reviewSpecs,
     todoSpecs,
     doneSpecs,
+    requestedSpecs,
     selectedSpecs,
     todos,
     source,
