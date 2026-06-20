@@ -510,7 +510,7 @@ try {
     console.log = originalLog;
   }
   const emptyStatusText = emptyStatusLines.join("\n");
-  if (!emptyStatusText.includes("Version:") || !emptyStatusText.includes("active specs: 0") || !emptyStatusText.includes("Next Step: Run specc bootstrap")) {
+  if (!emptyStatusText.includes("Version:") || !emptyStatusText.includes("active specs: 0") || !emptyStatusText.includes("open TODOs: 0") || !emptyStatusText.includes("Next Step: Run specc bootstrap")) {
     throw new Error(`Expected empty CLI status to recommend bootstrap, got: ${emptyStatusText}`);
   }
   const emptyStatusJsonLines: string[] = [];
@@ -525,10 +525,10 @@ try {
   const emptyStatusJson = JSON.parse(emptyStatusJsonLines.join("\n")) as {
     version: string;
     projectRoot: string;
-    workflowState: { active: number; todo: number; review: number; done: number };
+    workflowState: { active: number; todo: number; review: number; done: number; openTodos: number };
     nextStep: string;
   };
-  if (emptyStatusJson.version !== APP_VERSION || emptyStatusJson.workflowState.active !== 0 || !emptyStatusJson.nextStep.includes("specc bootstrap")) {
+  if (emptyStatusJson.version !== APP_VERSION || emptyStatusJson.workflowState.active !== 0 || emptyStatusJson.workflowState.openTodos !== 0 || !emptyStatusJson.nextStep.includes("specc bootstrap")) {
     throw new Error(`Expected empty CLI status JSON to recommend bootstrap, got: ${JSON.stringify(emptyStatusJson)}`);
   }
   const statusHelpLines: string[] = [];
@@ -622,8 +622,8 @@ try {
     console.log = originalLog;
   }
   const activeStatusText = activeStatusLines.join("\n");
-  if (!activeStatusText.includes("active specs: 1") || !activeStatusText.includes("Next Step: Call spec_context")) {
-    throw new Error(`Expected active CLI status to recommend spec_context, got: ${activeStatusText}`);
+  if (!activeStatusText.includes("active specs: 1") || !activeStatusText.includes("open TODOs:") || !activeStatusText.includes("Next Step: Call spec_context and execute open TODOs in order")) {
+    throw new Error(`Expected active CLI status to recommend open TODO execution, got: ${activeStatusText}`);
   }
   const activeStatusJsonLines: string[] = [];
   console.log = (...args: unknown[]) => {
@@ -635,11 +635,11 @@ try {
     console.log = originalLog;
   }
   const activeStatusJson = JSON.parse(activeStatusJsonLines.join("\n")) as {
-    workflowState: { active: number };
+    workflowState: { active: number; openTodos: number };
     nextStep: string;
   };
-  if (activeStatusJson.workflowState.active !== 1 || !activeStatusJson.nextStep.includes("spec_context")) {
-    throw new Error(`Expected active CLI status JSON to recommend spec_context, got: ${JSON.stringify(activeStatusJson)}`);
+  if (activeStatusJson.workflowState.active !== 1 || activeStatusJson.workflowState.openTodos < 1 || !activeStatusJson.nextStep.includes("open TODOs")) {
+    throw new Error(`Expected active CLI status JSON to recommend open TODO execution, got: ${JSON.stringify(activeStatusJson)}`);
   }
   await rm(cliBootstrapRoot, { recursive: true, force: true });
 

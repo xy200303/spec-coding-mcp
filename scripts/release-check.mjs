@@ -49,6 +49,7 @@ function assertDocumentationContract(readmeText, agentsText) {
     "specc serve",
     "specc status",
     "specc status --project-root . --json",
+    "open TODO",
     "specc bootstrap",
     "specc bootstrap --help",
     "--project-kind",

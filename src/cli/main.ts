@@ -2,6 +2,8 @@
 import { cancel, intro, isCancel, multiselect, note, outro, spinner } from "@clack/prompts";
 import { fileURLToPath } from "node:url";
 import { bootstrapProject, listSpecs } from "../spec/scaffold.js";
+import { readSpecsWithText } from "../spec/spec-reader.js";
+import { extractTodos } from "../spec/todo-files.js";
 import { renderSpecResult } from "../mcp/render-spec.js";
 import { detectProgrammingTools } from "./registry-detect.js";
 import { registerClaude, registerCodex, registerContinue, registerCursor, registerOpenCode, registerWindsurf } from "./registry-write.js";
@@ -116,11 +118,19 @@ async function runBootstrap(args: string[]): Promise<void> {
   console.log(renderSpecResult("Spec Coding 项目引导完成", result));
 }
 
-function statusNextStep(input: { active: number; todo: number; review: number }): string {
+function statusNextStep(input: { active: number; todo: number; review: number; openTodos: number }): string {
+  if (input.openTodos) {
+    return "Call spec_context and execute open TODOs in order.";
+  }
   if (input.active || input.todo || input.review) {
     return "Call spec_context in your AI tool before changing code or docs.";
   }
   return "Run specc bootstrap --project-root <path> --project-kind auto.";
+}
+
+async function countOpenTodos(root: string, items: Awaited<ReturnType<typeof listSpecs>>): Promise<number> {
+  const specs = await readSpecsWithText(root, [...items.active, ...items.todo], Number.MAX_SAFE_INTEGER);
+  return specs.flatMap((spec) => extractTodos(spec.file, spec.text)).filter((todo) => !todo.checked).length;
 }
 
 async function statusReport(args: string[]): Promise<{
@@ -128,17 +138,19 @@ async function statusReport(args: string[]): Promise<{
   version: string;
   projectRoot: string;
   specsDir: string;
-  workflowState: { active: number; todo: number; review: number; done: number };
+  workflowState: { active: number; todo: number; review: number; done: number; openTodos: number };
   nextStep: string;
 }> {
   const projectRoot = optionValue(args, "--project-root") ?? process.cwd();
   const specsDir = optionValue(args, "--specs-dir") ?? "specs";
   const specs = await listSpecs({ projectRoot, specsDir });
+  const openTodos = await countOpenTodos(specs.projectRoot, specs);
   const workflowState = {
     active: specs.active.length,
     todo: specs.todo.length,
     review: specs.review.length,
-    done: specs.done.length
+    done: specs.done.length,
+    openTodos
   };
   return {
     name: APP_NAME,
@@ -163,6 +175,7 @@ function renderStatusText(report: Awaited<ReturnType<typeof statusReport>>): str
     `  todo specs: ${report.workflowState.todo}`,
     `  review specs: ${report.workflowState.review}`,
     `  done specs: ${report.workflowState.done}`,
+    `  open TODOs: ${report.workflowState.openTodos}`,
     "",
     `Next Step: ${report.nextStep}`
   ].join("\n");
