@@ -283,7 +283,11 @@ try {
     "`engineering`",
     "`ui-ux`",
     "`spec-writing`",
+    "`git-commit`",
+    "`pr-submit`",
     "specs/guidance/engineering.md",
+    "specs/guidance/git-commit.md",
+    "specs/guidance/pr-submit.md",
     "这些提示词是指导性原则"
   ], "Expected guidance list to expose editable prompt names and files");
   const guidanceRead = await harness.call("spec_guidance_read", { projectRoot: root, specsDir: "specs", name: "ui-ux" });
@@ -322,6 +326,22 @@ try {
     "## 当前任务协议",
     "## 行为记录要求"
   ], "Expected missing guidance files to be written before reading");
+  const generatedFallbackGitCommitGuidance = await readFile(path.join(fallbackGuidanceRoot, "specs", "guidance", "git-commit.md"), "utf8");
+  assertIncludesAll(generatedFallbackGitCommitGuidance, [
+    "Git 提交工作流原则",
+    "只有用户明确要求提交",
+    "git diff --cached --check",
+    "短 hash"
+  ], "Expected missing git commit guidance file to be written with default workflow content");
+  const prGuidanceRead = await harness.call("spec_guidance_read", { projectRoot: fallbackGuidanceRoot, specsDir: "specs", name: "pr-submit" });
+  assertIncludesAll(prGuidanceRead.content[0]?.text ?? "", [
+    "PR 提交工作流原则",
+    "source: `project`",
+    "file: `specs/guidance/pr-submit.md`",
+    "PR 模板发现顺序",
+    "gh pr create",
+    "compare URL"
+  ], "Expected PR guidance read to expose default PR workflow content");
   await rm(fallbackGuidanceRoot, { recursive: true, force: true });
 
   const unmatchedContext = await harness.call("spec_context", {
@@ -613,6 +633,8 @@ try {
     "`engineering`",
     "`ui-ux`",
     "`spec-writing`",
+    "`git-commit`",
+    "`pr-submit`",
     "guidance 是按需提醒",
     "Required Guards",
     "写代码或改文档前必须先读本次 `spec_context`",

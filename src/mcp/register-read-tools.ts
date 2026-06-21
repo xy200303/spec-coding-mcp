@@ -23,7 +23,7 @@ const ReadContextSchema = RootSchema.extend({
 });
 
 const GuidanceReadSchema = RootSchema.extend({
-  name: z.string().min(1).describe("Guidance name from spec_guidance_list, such as engineering, ui-ux, or spec-writing.")
+  name: z.string().min(1).describe("Guidance name from spec_guidance_list, such as engineering, ui-ux, spec-writing, git-commit, or pr-submit.")
 });
 
 export function registerReadTools(server: McpServer, guard: SessionGuardState): void {
@@ -122,7 +122,7 @@ export function registerReadTools(server: McpServer, guard: SessionGuardState): 
   server.registerTool(
     "spec_guidance_list",
     {
-      description: "List built-in editable guidance prompts. Use when the model needs reminders such as engineering, UI/UX, or spec-writing principles without bloating spec_context.",
+      description: "List built-in editable guidance prompts. Use when the model needs reminders such as engineering, UI/UX, spec-writing, git commit, or PR principles without bloating spec_context.",
       inputSchema: RootSchema
     },
     async ({ projectRoot, specsDir }) => {
@@ -143,7 +143,7 @@ export function registerReadTools(server: McpServer, guard: SessionGuardState): 
         "",
         "## Next",
         "",
-        "- 当需要校准某类原则时，调用 `spec_guidance_read` 并传入对应 name。"
+        "- 当需要校准某类原则或工作流时，调用 `spec_guidance_read` 并传入对应 name。"
       ].join("\n"));
     }
   );

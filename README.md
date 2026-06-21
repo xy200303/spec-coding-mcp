@@ -65,6 +65,8 @@ specs/
     engineering.md
     ui-ux.md
     spec-writing.md
+    git-commit.md
+    pr-submit.md
   review/
     source-inventory.md
     index.md
@@ -81,7 +83,7 @@ specs/
 - `active/`：准备实现或正在实现的 spec。
 - `todo/`：轻量可执行 TODO 清单，适合临时任务、拆分步骤或补充实现顺序。
 - `done/`：已实现并验证通过的 spec。
-- `guidance/`：可编辑的指导性提示词，供模型在忘记工程、UI/UX 或 spec 写作原则时按需读取。
+- `guidance/`：可编辑的指导性提示词，供模型在忘记工程、UI/UX、spec 写作、Git 提交或 PR 工作流原则时按需读取。
 
 ## MCP 工具
 
@@ -156,7 +158,7 @@ specs/
 - 阶段记录：`spec_checkpoint` 或 `spec_review_result`。
 - 完成归档：只在实现、验证和最终行为契约都完成后调用 `spec_done`。
 
-`spec_context` 默认使用 `contextMode: "workflow"`，只输出任务流程、spec/TODO、guidance 索引和必要执行护栏。工程、UI/UX、spec 写作等原则详情不在 context 中展开；模型忘记原则或需要校准时，应先调用 `spec_guidance_list` 查看索引，再调用 `spec_guidance_read` 读取对应 name。需要源码线索时显式传入 `contextMode: "hints"`；需要完整源码扫描线索时再使用 `contextMode: "full"`。这些线索只是搜索入口，不是事实来源，模型修改前必须自行读取相关文件确认。
+`spec_context` 默认使用 `contextMode: "workflow"`，只输出任务流程、spec/TODO、guidance 索引和必要执行护栏。工程、UI/UX、spec 写作、Git 提交、PR 提交等原则详情不在 context 中展开；模型忘记原则或需要校准时，应先调用 `spec_guidance_list` 查看索引，再调用 `spec_guidance_read` 读取对应 name。需要源码线索时显式传入 `contextMode: "hints"`；需要完整源码扫描线索时再使用 `contextMode: "full"`。这些线索只是搜索入口，不是事实来源，模型修改前必须自行读取相关文件确认。
 
 `spec_list` 和 `spec_context` 都会输出 `Recommended Next Step`，但语义不同：`spec_list` 属于 inspect 阶段，通常推荐下一步先读取 `spec_context`；`spec_context` 属于执行前上下文阶段，才推荐执行 TODO、补全 review、实现 active spec 或记录结果。即使当前没有 active、todo、review 或 selected spec，`spec_context` 也必须输出结构化下一步推荐，而不是只提示“不要开始实现”。空任务状态优先推荐 `spec_bootstrap` 建立项目入口，并把 `spec_todo`、`spec_create` 作为用户已给出明确任务时的备选。推荐会固定包含 `nextTool`、`alternatives`、`arguments`、`reason`、`when` 和 `afterwards`。`nextTool` 始终是单一工具 ID；`arguments` 只放可安全推导的上下文值或占位说明，不替模型编造 prompt、title 或行为记录。模型应优先执行 `nextTool`，只有用户明确要求或条件不满足时才考虑 `alternatives`。
 
@@ -164,7 +166,7 @@ specs/
 
 两者也会输出 `Workflow State` 摘要，展示 active、todo、review、done、selected spec 和 open TODO 数量。这个摘要只来自当前 specs 状态，帮助模型快速判断工作流位置，不替代源码阅读或业务判断。
 
-`spec_guidance_list` 和 `spec_guidance_read` 是按需提醒工具。`spec_init` 和 `spec_bootstrap` 会生成默认的 `specs/guidance/engineering.md`、`specs/guidance/ui-ux.md` 和 `specs/guidance/spec-writing.md`；用户可以直接编辑这些 Markdown。读取 guidance 时，如果目录缺失、目录为空或缺少某个默认文件，工具会先把缺失的内置默认 Markdown 写入项目，再读取项目内容；已有文件不会被覆盖。guidance 内容不塞进 `spec_context`，也不替代 selected specs、open TODO、用户要求或真实源码阅读。
+`spec_guidance_list` 和 `spec_guidance_read` 是按需提醒工具。`spec_init` 和 `spec_bootstrap` 会生成默认的 `specs/guidance/engineering.md`、`specs/guidance/ui-ux.md`、`specs/guidance/spec-writing.md`、`specs/guidance/git-commit.md` 和 `specs/guidance/pr-submit.md`；用户可以直接编辑这些 Markdown。读取 guidance 时，如果目录缺失、目录为空或缺少某个默认文件，工具会先把缺失的内置默认 Markdown 写入项目，再读取项目内容；已有文件不会被覆盖。guidance 内容不塞进 `spec_context`，也不替代 selected specs、open TODO、用户要求或真实源码阅读。
 
 ### 写操作硬约束
 
@@ -209,14 +211,16 @@ TODO 可以放在 `specs/todo/*.md`，也可以写在 active spec 的 `## TODO` 
 
 工程质量约束的单一可信来源在 `src/templates/constraints.ts`，Markdown 渲染统一由 `src/templates/markdown.ts` 完成。
 
-`AGENTS.md` 和 `CLAUDE.md` 只保留短启动协议：提醒模型先调用 `spec_context`，按 selected specs/open TODO 执行，并在忘记原则时读取 guidance。完整工程、UI/UX、spec 写作原则放在 `specs/guidance/*.md`，不塞进启动文件。
+`AGENTS.md` 和 `CLAUDE.md` 只保留短启动协议：提醒模型先调用 `spec_context`，按 selected specs/open TODO 执行，并在忘记原则时读取 guidance。完整工程、UI/UX、spec 写作、Git 提交和 PR 提交原则放在 `specs/guidance/*.md`，不塞进启动文件。
 
-完整 guidance 默认内容分为三层：
+完整 guidance 默认内容包含：
 
 - Hard Rules：Fail Fast、风险确认、文件顶部注释、禁止混层、禁止无意义抽象、性能和资源底线。
 - Recommended Practices：KISS、YAGNI、Clean Code、Human Readable、Clean Architecture、DDD、SOLID、SoC、测试优先、成熟库优先、局部小步重构、AI 可生成且人类可维护。
 - Business Confirmation Rules：金额、费率、结算、分账、退款、折扣、税费、状态机、并发、幂等、重试、回滚、规则来源不明或角色行为不一致时，必须先向用户确认，不允许靠常识猜业务。
 - Current Task Protocol：当前任务必须如何读取 `spec_context`、执行 TODO、记录 checkpoint 和归档 done。
+- Git Commit Workflow：用户要求提交时如何验证、暂存相关文件、避免混入无关变更、选择提交信息语言并报告 hash。
+- PR Submit Workflow：用户要求 PR 时如何发现模板、提交未提交工作、推送分支、生成或创建 PR，并在工具不可用时提供 compare URL。
 
 提示词协议由 `src/templates/constraints.ts`、`src/templates/prompt-protocol.ts` 和 `src/templates/markdown.ts` 共同生成。
 

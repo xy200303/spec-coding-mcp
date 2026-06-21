@@ -282,11 +282,11 @@ async function testGuidanceCreatesDefaultsAndPreservesProjectFiles(): Promise<vo
   const root = await mkdtemp(path.join(os.tmpdir(), "spec-coding-guidance-"));
   try {
     const items = guidanceItems("docs/specs");
-    assert(items.map((item) => item.name).join(",") === "engineering,ui-ux,spec-writing", "Expected guidance names to stay stable.");
+    assert(items.map((item) => item.name).join(",") === "engineering,ui-ux,spec-writing,git-commit,pr-submit", "Expected guidance names to stay stable.");
     assert(items[0]?.file === "docs/specs/guidance/engineering.md", "Expected guidance file paths to respect specsDir.");
 
     const created = await ensureDefaultGuidanceFiles(root, "specs");
-    assert(created.filter((file) => file.status === "created").length === 3, "Expected empty guidance directory to be populated with defaults.");
+    assert(created.filter((file) => file.status === "created").length === 5, "Expected empty guidance directory to be populated with defaults.");
     const createdAgain = await ensureDefaultGuidanceFiles(root, "specs");
     assert(createdAgain.every((file) => file.status === "skipped"), "Expected existing guidance files to be preserved.");
 
@@ -311,6 +311,18 @@ async function testGuidanceCreatesDefaultsAndPreservesProjectFiles(): Promise<vo
     assertIncludes(uiUx.content, "loading / pending", "Expected UI/UX guidance to include loading states.");
     assertIncludes(uiUx.content, "undo", "Expected UI/UX guidance to include undo guidance.");
 
+    const gitCommit = await readGuidance({ projectRoot: root, specsDir: "specs", name: "git-commit" });
+    assertIncludes(gitCommit.content, "Git 提交工作流原则", "Expected git commit guidance content.");
+    assertIncludes(gitCommit.content, "只有用户明确要求提交", "Expected git commit guidance to include trigger rules.");
+    assertIncludes(gitCommit.content, "git diff --cached --check", "Expected git commit guidance to include staged diff checks.");
+    assertIncludes(gitCommit.content, "短 hash", "Expected git commit guidance to include final report requirements.");
+
+    const prSubmit = await readGuidance({ projectRoot: root, specsDir: "specs", name: "pr-submit" });
+    assertIncludes(prSubmit.content, "PR 提交工作流原则", "Expected PR guidance content.");
+    assertIncludes(prSubmit.content, "PR 模板发现顺序", "Expected PR guidance to include template discovery.");
+    assertIncludes(prSubmit.content, "gh pr create", "Expected PR guidance to include GitHub CLI creation path.");
+    assertIncludes(prSubmit.content, "compare URL", "Expected PR guidance to include fallback compare URL.");
+
     const projectGuidance = path.join(root, "specs", "guidance", "ui-ux.md");
     await mkdir(path.dirname(projectGuidance), { recursive: true });
     await writeFile(projectGuidance, "# Custom UI Guidance\n\n保持产品语境。\n", "utf8");
@@ -326,7 +338,7 @@ async function testGuidanceCreatesDefaultsAndPreservesProjectFiles(): Promise<vo
     } catch (error) {
       unknownMessage = error instanceof Error ? error.message : String(error);
     }
-    assertIncludes(unknownMessage, "Available: engineering, ui-ux, spec-writing", "Expected unknown guidance to fail fast with available names.");
+    assertIncludes(unknownMessage, "Available: engineering, ui-ux, spec-writing, git-commit, pr-submit", "Expected unknown guidance to fail fast with available names.");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

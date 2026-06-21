@@ -36,7 +36,7 @@
 ## 指导性提示词
 
 `spec_guidance_list` 会列出内置 guidance 名称和对应 Markdown 路径；`spec_guidance_read` 会读取某一份提示词。
-这些提示词只用于在模型忘记工程、UI/UX 或 spec 写作原则时按需提醒，不替代当前 spec、TODO、用户要求或代码事实。
+这些提示词只用于在模型忘记工程、UI/UX、spec 写作、Git 提交或 PR 工作流原则时按需提醒，不替代当前 spec、TODO、用户要求或代码事实。
 `spec_context` 只显示 guidance 索引和必要执行护栏，不展开完整原则正文；需要细节时再按 name 读取 guidance。
 用户可以直接编辑 `guidance/*.md`；目录缺失、为空或缺少默认文件时，工具会补齐内置默认 Markdown，已有文件不会被覆盖。
 
