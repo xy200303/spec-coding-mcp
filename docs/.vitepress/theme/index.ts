@@ -1,4 +1,4 @@
-/* VitePress theme entry that keeps the default theme while allowing local CSS overrides. */
 import DefaultTheme from "vitepress/theme";
+import "@theojs/lumen/style";
 
 export default DefaultTheme;
