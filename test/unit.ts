@@ -181,7 +181,7 @@ function testActiveSpecUsesGuidancePointers(): void {
   assertIncludes(text, "type: 'active-spec'", "Expected active spec metadata to include type.");
   assertIncludes(text, "status: 'active'", "Expected active spec metadata to include status.");
   assertIncludes(text, "description: 'User-requested implementation spec", "Expected active spec metadata to include description.");
-  assertIncludes(text, "## 定位与事实来源", "Expected active spec to require positioning and evidence sources.");
+  assertIncludes(text, "## 事实依据", "Expected active spec to require positioning and evidence sources.");
   assertIncludes(text, "禁止编造", "Expected active spec to forbid fabricated facts.");
   assertIncludes(text, "## Guidance", "Expected active spec to include a guidance pointer section.");
   assertIncludes(text, "spec_guidance_list", "Expected active spec to point to guidance list.");
@@ -249,7 +249,7 @@ async function testCheckpointWriter(): Promise<void> {
     const nextText = await readFile(file, "utf8");
     assertIncludes(nextText, "- [x] 补充字段", "Expected checkpoint to mark matched TODO.");
     assertIncludes(nextText, "- [ ] 更新测试", "Expected checkpoint to preserve open TODO.");
-    assertIncludes(nextText, "### 实际行为记录", "Expected checkpoint to include behavior records.");
+    assertIncludes(nextText, "### 行为记录", "Expected checkpoint to include behavior records.");
     assertIncludes(nextText, "1. 字段补充", "Expected checkpoint behavior records to render as numbered text.");
     assertIncludes(nextText, "  - 条件：字段存在", "Expected checkpoint behavior record to include condition text.");
     assertIncludes(nextText, "  - 触发入口：读取详情接口返回字段", "Expected checkpoint behavior record to include trigger.");
@@ -313,7 +313,7 @@ async function testDoneWriterAvoidsOverwrites(): Promise<void> {
       "",
       "保留真实业务目标。",
       "",
-      "## 执行要求",
+      "## 执行协议",
       "",
       "- 开始前必须先调用 spec_context。",
       "",
@@ -325,7 +325,7 @@ async function testDoneWriterAvoidsOverwrites(): Promise<void> {
       "",
       "- 模板指导不进入 done。",
       "",
-      "## Checkpoint",
+      "## 进度记录",
       "",
       "- summary: 过程记录不进入 done。",
       ""
@@ -358,7 +358,8 @@ async function testDoneWriterAvoidsOverwrites(): Promise<void> {
     assertIncludes(archivedText, "type: done-spec", "Expected archived spec YAML type to be updated to done-spec.");
     assertIncludes(archivedText, "category: done", "Expected archived spec YAML category to be updated to done.");
     assertIncludes(archivedText, "status: done", "Expected archived spec YAML status to be done.");
-    assertIncludes(archivedText, "- status: done", "Expected archived spec meta status to be done.");
+    assert(!archivedText.includes("## Meta"), "Expected archived spec to omit duplicated body metadata.");
+    assert(!archivedText.includes("- status: done"), "Expected archived spec to rely on YAML status instead of body metadata.");
     assertIncludes(archivedText, "保留真实业务目标。", "Expected archived spec to keep business content.");
     assertIncludes(archivedText, "## 最终行为契约", "Expected archived spec to include final behavior contract.");
     assertIncludes(archivedText, "给用户审查功能完整行为", "Expected final behavior contract to explain user review purpose.");
@@ -369,10 +370,10 @@ async function testDoneWriterAvoidsOverwrites(): Promise<void> {
     assertIncludes(archivedText, "1. 读取配置对象", "Expected archived spec to preserve execution steps.");
     assertIncludes(archivedText, "输出结果：返回带默认配置的任务", "Expected archived spec to preserve behavior output.");
     assertIncludes(archivedText, "使用系统默认值", "Expected archived spec to preserve behavior result.");
-    assert(!archivedText.includes("## 执行要求"), "Expected archived spec to omit execution template noise.");
+    assert(!archivedText.includes("## 执行协议"), "Expected archived spec to omit execution template noise.");
     assert(!archivedText.includes("## Guidance"), "Expected archived spec to omit guidance pointer noise.");
     assert(!archivedText.includes("## 工程质量约束"), "Expected archived spec to omit engineering template noise.");
-    assert(!archivedText.includes("## Checkpoint"), "Expected archived spec to omit checkpoint history.");
+    assert(!archivedText.includes("## 进度记录"), "Expected archived spec to omit checkpoint history.");
     assert(result.nextSteps.some((step) => step.includes("最终行为契约已记录")), "Expected done result to confirm behavior contract.");
     assert(result.specs[0] === `specs/done/${day}/002-new-demo.md`, "Expected result to report dated collision-free done path.");
   } finally {
@@ -404,7 +405,7 @@ async function testSpecListingReadsYamlMetadata(): Promise<void> {
       "",
       "# YAML Demo",
       "",
-      "## TODO",
+      "## 执行清单",
       "",
       "- [ ] 验证 YAML 元信息读取。"
     ].join("\n"), "utf8");

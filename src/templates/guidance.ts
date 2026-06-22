@@ -53,7 +53,7 @@ const guidanceMetadatas = {
     name: "spec-writing",
     version: GUIDANCE_VERSION,
     title: "Spec 与行为记录原则",
-    description: "Spec workflow rules for TODO execution, checkpoints, done archives, and behavior contracts.",
+    description: "Spec workflow rules for execution checklists, progress records, done archives, and behavior contracts.",
     category: "workflow",
     triggers: ["spec", "todo", "checkpoint", "done", "behavior-record", "handoff"],
     appliesTo: ["specs", "todos", "checkpoints", "behavior-records", "done-archives"],
@@ -176,7 +176,7 @@ function uiUxGuidance(): string {
 }
 
 function specWritingGuidance(): string {
-  return guidanceDocument(guidanceMetadatas["spec-writing"], "用于提醒模型写清楚 spec、TODO、checkpoint 和最终行为契约。", [
+  return guidanceDocument(guidanceMetadatas["spec-writing"], "用于提醒模型写清楚 spec、执行清单、进度记录和最终行为契约。", [
     "## 当前任务协议",
     "",
     ...currentTaskInstructionBullets(),
@@ -395,7 +395,7 @@ export const guidanceTemplates: GuidanceTemplate[] = [
   },
   {
     ...guidanceMetadatas["spec-writing"],
-    purpose: "用于提醒模型写清楚 spec、TODO、checkpoint 和最终行为契约。",
+    purpose: "用于提醒模型写清楚 spec、执行清单、进度记录和最终行为契约。",
     fileName: "spec-writing.md",
     content: specWritingGuidance()
   },

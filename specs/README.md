@@ -35,8 +35,8 @@ updated: '2026-06-21'
 2. 再调用 `spec_context`，确认当前任务的 spec、TODO 和工程约束。
 3. AI 必须阅读 `review/*.md` 列出的源码和测试，再把真实行为总结成业务规格。
 4. 小任务放在 `todo/`；功能开发放在 `active/`。
-5. Codex 按 spec 和未勾选 TODO 修改代码和测试。
-6. 阶段完成后调用 `spec_checkpoint` 记录进度、验证和实际行为。
+5. Codex 按 spec 和未勾选执行清单修改代码和测试。
+6. 阶段完成后调用 `spec_checkpoint` 记录进度、验证和执行记录。
 7. 验证通过且最终行为契约已记录后，才能调用 `spec_done`。
 
 ## 状态
@@ -44,14 +44,14 @@ updated: '2026-06-21'
 - `source-review/needs-ai-summary`：静态源码线索生成的 AI 审查任务，不代表业务事实，必须阅读源码后补全。
 - `draft`：用户正在描述需求，尚未实现。
 - `active`：准备实现或正在实现。
-- `todo`：轻量任务清单，AI 应按未勾选项顺序执行。
+- `todo`：轻量执行清单，AI 应按未勾选项顺序执行。
 - `done`：代码和测试已按该 spec 完成。
 
 ## 目录
 
 - `review/`：指导 AI 阅读源码并总结真实行为的待审查任务。
 - `active/YYYY-MM-DD/NNN-readable-name.md`：当前要实现的 specs，按日期和当天顺序归档。
-- `todo/YYYY-MM-DD/NNN-readable-name.md`：可执行 TODO 清单，适合拆分小任务或补充实现步骤。
+- `todo/YYYY-MM-DD/NNN-readable-name.md`：可执行清单，适合拆分小任务或补充实现步骤。
 - `done/YYYY-MM-DD/NNN-readable-name.md`：已经完成的 specs，必须保留来自代码和测试验证的最终行为契约。
 - `guidance/*.md`：可编辑的指导性提示词，供 `spec_guidance_list` 和 `spec_guidance_read` 按需读取。
 
@@ -66,7 +66,17 @@ updated: '2026-06-21'
 ## Markdown 元信息
 
 本目录下的 Markdown 文件默认带 YAML 元信息，放在正文最前面，供工具和模型检索。常见字段包括 `name`、`version`、`title`、`type`、`status`、`source`、`description`、`category`、`triggers`、`appliesTo` 和 `updated`。
-旧的 `## Meta` 仍可保留，作为人类可读摘要和兼容层；工具读取状态时会兼容 YAML front matter 与旧的 `- status:` / `- source:` 写法。
+新生成的 spec 正文不再重复 `## Meta`、`status` 或 `source`；正文标题优先服务人类阅读，例如“任务说明”“执行清单”“执行记录”“归档记录”。工具读取状态时会优先使用 YAML front matter，并继续兼容旧文件里的 `## Meta`、`- status:` / `- source:` 写法。
+
+## 正文结构
+
+- `任务说明`：保留用户输入、问题背景或审查说明。
+- `执行清单`：使用 Markdown checkbox 表达本轮要按顺序完成的任务。
+- `执行协议`：说明 AI 如何读取 context、执行清单、记录进度和处理阻塞。
+- `执行记录`：记录来自代码、测试或用户确认的实际行为。
+- `进度记录`：`spec_checkpoint` 追加的阶段性摘要、变更、验证、风险和阻塞。
+- `归档记录`：`spec_done` 追加的完成时间和备注。
+- `最终行为契约`：给用户审查的完整功能行为全景。
 
 ## 命名要求
 

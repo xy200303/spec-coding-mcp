@@ -30,17 +30,17 @@ This file is only the model startup router. It should stay short.
 Before code or documentation changes:
 
 1. Call `spec_context` and read the current workflow state.
-2. Treat selected specs and open TODOs as the only task source.
-3. Execute open TODOs from top to bottom; when none exist, follow the selected spec.
+2. Treat selected specs and open execution checklist items as the only task source.
+3. Execute open checklist items from top to bottom; when none exist, follow the selected spec.
 4. If principles are unclear, call `spec_guidance_list`, then `spec_guidance_read`: engineering rules use `engineering`, UI/UX rules use `ui-ux`.
 5. Record meaningful progress with `spec_checkpoint`.
-6. Call `spec_done` only after implementation, TODO updates, verification, and final behavior records are complete.
+6. Call `spec_done` only after implementation, checklist updates, verification, and final behavior records are complete.
 
 ## Guidance
 
 - `engineering`：engineering, code style, architecture, and business confirmation rules.
 - `ui-ux`：fact-first, context-sensitive UI/UX design principles.
-- `spec-writing`：spec workflow, TODO handling, checkpoint, done, and behavior records.
+- `spec-writing`：spec workflow, execution checklist, progress records, done archives, and behavior records.
 - `git-commit`：safe verification, staging, commit message, and final report workflow.
 - `pr-submit`：PR template discovery, branch push, PR body, creation, and fallback workflow.
 - `quality-review`：implementation self-review for code quality, tests, architecture, UI/UX states, and delivery risk.

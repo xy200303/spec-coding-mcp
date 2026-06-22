@@ -23,11 +23,11 @@ specs/
 ---
 name: todo-spec
 version: 1.1.0
-title: 用户详情 TODO
+title: 用户详情执行清单
 type: todo-spec
 status: todo
 source: user-prompt
-description: Lightweight executable TODO spec for ordered task execution and checkpoint recording.
+description: Lightweight executable checklist spec for ordered task execution and progress recording.
 category: todo
 triggers:
   - todo
@@ -37,7 +37,7 @@ updated: 2026-06-21
 ---
 ```
 
-旧的 `## Meta` 仍保留为人类可读正文和兼容层；读取器会继续识别 `- status:`、`- source:` 这类旧字段。
+新生成的 spec 不再在正文重复 `## Meta`、`status` 或 `source`；这些机器可读字段由 YAML front matter 承载。读取器仍兼容旧文件里的 `## Meta`、`- status:`、`- source:`。
 
 ## review
 
@@ -58,11 +58,10 @@ updated: 2026-06-21
 
 一个 active spec 通常包含：
 
-- 背景
-- 用户目标
+- 任务说明
+- 目标结果
 - 范围
-- 非目标
-- 行为规则
+- 行为约定
 - 接口或命令
 - UI 与交互
 - 数据影响
@@ -71,9 +70,9 @@ updated: 2026-06-21
 
 ## todo
 
-`todo/` 存放轻量可执行任务清单，适合把一个需求拆成按顺序执行的小任务。
+`todo/` 存放轻量可执行清单，适合把一个需求拆成按顺序执行的小任务。
 
-TODO 使用 Markdown 任务列表：
+执行清单使用 Markdown 任务列表：
 
 ```md
 - [ ] 定位相关代码。
@@ -83,18 +82,18 @@ TODO 使用 Markdown 任务列表：
 
 `spec_context` 会提取未勾选项，并要求 AI 按顺序执行。完成后应把对应任务改成 `[x]`；如果无法完成，保留 `[ ]` 并写清阻塞原因。
 
-## checkpoint
+## progress
 
-`spec_checkpoint` 会向 spec 或 TODO 文件追加 `## Checkpoint`，记录：
+`spec_checkpoint` 会向 spec 或 TODO 文件追加 `## 进度记录`，记录：
 
 - 完成摘要
-- completed TODO
+- 已完成清单
 - 变更文件
 - 验证命令和结果
 - 风险
 - 阻塞项
 
-它会自动把匹配到的未完成 TODO 改成 `[x]`。
+它会自动把匹配到的未完成清单项改成 `[x]`。
 
 ## guidance
 

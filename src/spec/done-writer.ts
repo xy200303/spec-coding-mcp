@@ -20,12 +20,16 @@ function markArchivedStatus(text: string): string {
 }
 
 const doneArchiveExcludedSections = new Set([
+  "## Meta",
   "## 执行要求",
+  "## 执行协议",
   "## Guidance",
   "## 工程质量约束",
   "## 业务不确定性强制确认",
   "## Checkpoint",
+  "## 进度记录",
   "## Done",
+  "## 归档记录",
   "## 最终行为契约"
 ]);
 
@@ -66,10 +70,10 @@ export async function markSpecDone(input: { projectRoot: string; specsDir?: stri
   const doneText = [
     text.trimEnd(),
     "",
-    "## Done",
+    "## 归档记录",
     "",
-    `- doneAt: ${nowIso()}`,
-    input.note ? `- note: ${input.note}` : "- note: verified by user/Codex",
+    `- 完成时间：${nowIso()}`,
+    input.note ? `- 备注：${input.note}` : "- 备注：verified by user/Codex",
     "",
     ...behaviorRecordLines("## 最终行为契约", input.behaviorRecords)
   ].join("\n");

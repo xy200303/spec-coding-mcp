@@ -5,7 +5,7 @@
 <h1 align="center">Spec Coding MCP</h1>
 
 <p align="center">
-  <strong>给 AI 编程工具使用的 spec / TODO / checkpoint 本地 MCP 工作流</strong>
+  <strong>给 AI 编程工具使用的 spec / 执行清单 / 进度记录本地 MCP 工作流</strong>
 </p>
 
 <p align="center">
@@ -46,7 +46,7 @@ Spec Coding MCP 是一个面向 **spec coding** 的本地 MCP 服务。
 
 - 从没有 spec 的旧项目中反推 `specs/` 目录，方便用户审查当前系统。
 - 用户开发前先修改或新增 spec。
-- 用户可以用 TODO 清单拆分任务，模型按未勾选项顺序执行。
+- 用户可以用执行清单拆分任务，模型按未勾选项顺序执行。
 - 工具会在模型上下文中输出轻量 guidance 推荐，提醒模型按需读取工程、UI/UX、spec 写作和质量审查原则。
 - 工具强制遵守 KISS、YAGNI、Clean Code、Clean Architecture、DDD、Fail Fast、SOLID、SoC 和 Boy Scout Rule。
 - 工具还会防止混层、过度抽象和不必要的复杂度，把代码组织成适合大型项目、也适合人读的结构。
@@ -82,7 +82,7 @@ specs/
 
 - `review/`：AI 源码审查任务，状态通常是 `source-review/needs-ai-summary`；静态线索只用于指导 AI 阅读源码，不代表业务事实。
 - `active/`：准备实现或正在实现的 spec。
-- `todo/`：轻量可执行 TODO 清单，适合临时任务、拆分步骤或补充实现顺序。
+- `todo/`：轻量可执行清单，适合临时任务、拆分步骤或补充实现顺序。
 - `done/`：已实现并验证通过的 spec。
 - `guidance/`：可编辑的指导性提示词，供模型在忘记工程、UI/UX、spec 写作、Git 提交、PR 工作流或质量审查原则时按需读取。
 
@@ -104,14 +104,14 @@ specs/
 
 | 工具 | 适用场景 |
 |---|---|
-| `spec_create` | 功能开发、问题修复或移除任务，需要行为规则、验收标准和实现计划 |
-| `spec_todo` | 小而明确的临时任务，适合按 TODO 顺序执行 |
+| `spec_create` | 功能开发、问题修复或移除任务，需要行为约定、完成标准和实现计划 |
+| `spec_todo` | 小而明确的临时任务，适合按执行清单顺序执行 |
 
 ### 结果记录工具
 
 | 工具 | 适用场景 |
 |---|---|
-| `spec_checkpoint` | 阶段性完成后记录 TODO、文件、验证、实际行为、风险和阻塞 |
+| `spec_checkpoint` | 阶段性完成后记录清单项、文件、验证、执行记录、风险和阻塞 |
 | `spec_review_result` | 高级交接/审查记录，适合部分完成、存在未完成 TODO 或阻塞时使用 |
 | `spec_done` | 仅在实现、TODO、验证和最终行为契约都完成后归档 |
 
@@ -146,7 +146,7 @@ specs/
 1. 在任何代码或文档变更前，先调用 `spec_context`。
 2. 调用 `spec_create`，根据用户描述生成 active spec。
 3. 用户审阅并修改 `specs/active/*.md`。
-4. 如需拆任务，可调用 `spec_todo` 或在 spec 里写 `## TODO`。
+4. 如需拆任务，可调用 `spec_todo` 或在 spec 里写 `## 执行清单`。
 5. 再次调用 `spec_context`，确认当前 spec、TODO 和工程约束。
 6. Codex 按 spec 和未勾选 TODO 顺序实现代码和测试。
 7. 阶段性完成后调用 `spec_checkpoint` 记录完成情况。
@@ -157,7 +157,7 @@ specs/
 - 新项目初始化：`spec_bootstrap`。
 - 旧项目接入：`spec_bootstrap`，然后 AI 补全 review spec。
 - 临时小任务：`spec_todo`。
-- 需要行为规则和验收标准的功能：`spec_create` 或已有 active spec。
+- 需要行为约定和完成标准的功能：`spec_create` 或已有 active spec。
 - 阶段记录：`spec_checkpoint` 或 `spec_review_result`。
 - 完成归档：只在实现、验证和最终行为契约都完成后调用 `spec_done`。
 
@@ -181,12 +181,12 @@ YAML 元信息只用于需要被工具读取的文档，例如 `AGENTS.md`、`CL
 
 如果跳过 `spec_context`，这些写操作会直接失败，并明确提示先读取模型上下文。
 
-### TODO 驱动任务
+### 执行清单驱动
 
-TODO 可以放在 `specs/todo/*.md`，也可以写在 active spec 的 `## TODO` 中：
+执行清单可以放在 `specs/todo/*.md`，也可以写在 active spec 的 `## 执行清单` 中：
 
 ```md
-## TODO
+## 执行清单
 
 - [ ] 定位用户详情接口和测试。
 - [ ] 增加禁用态字段。
@@ -195,7 +195,7 @@ TODO 可以放在 `specs/todo/*.md`，也可以写在 active spec 的 `## TODO` 
 
 `spec_context` 会提取所有未勾选 TODO，要求模型按顺序执行；完成后应把对应任务改成 `[x]`，无法完成时保留未勾选并说明阻塞原因。
 
-### Checkpoint 闭环
+### 进度记录闭环
 
 `spec_checkpoint` 用于把实现后的事实写回 spec 或 TODO 文件：
 
@@ -203,7 +203,7 @@ TODO 可以放在 `specs/todo/*.md`，也可以写在 active spec 的 `## TODO` 
 - 已完成并自动勾选的 TODO
 - 本次变更文件
 - 验证命令和结果
-- 实际行为记录：功能全过程、全部已知分支条件、默认参数行为、模型采用的默认策略、边界处理结果
+- 执行记录：功能全过程、全部已知分支条件、默认参数行为、模型采用的默认策略、边界处理结果
 - 结构化 `behaviorRecords`：场景、条件、触发入口、输入与前置状态、执行步骤、输出结果、副作用、默认行为、边界处理、验证和关联文件
 - 已知风险
 
@@ -225,7 +225,7 @@ TODO 可以放在 `specs/todo/*.md`，也可以写在 active spec 的 `## TODO` 
 - Hard Rules：Fail Fast、风险确认、文件顶部注释、禁止混层、禁止无意义抽象、性能和资源底线。
 - Recommended Practices：KISS、YAGNI、Clean Code、Human Readable、Clean Architecture、DDD、SOLID、SoC、测试优先、成熟库优先、局部小步重构、AI 可生成且人类可维护。
 - Business Confirmation Rules：金额、费率、结算、分账、退款、折扣、税费、状态机、并发、幂等、重试、回滚、规则来源不明或角色行为不一致时，必须先向用户确认，不允许靠常识猜业务。
-- Current Task Protocol：当前任务必须如何读取 `spec_context`、执行 TODO、记录 checkpoint 和归档 done。
+- Current Task Protocol：当前任务必须如何读取 `spec_context`、执行清单、记录进度并归档 done。
 - Git Commit Workflow：用户要求提交时如何验证、暂存相关文件、避免混入无关变更、选择提交信息语言并报告 hash。
 - PR Submit Workflow：用户要求 PR 时如何发现模板、提交未提交工作、推送分支、生成或创建 PR，并在工具不可用时提供 compare URL。
 - Quality Review Workflow：实现后如何自查代码质量、测试覆盖、架构边界、UI/交互状态、真实定位、首屏对象、Web 端口/截图验收和交付风险。
@@ -281,7 +281,7 @@ npm test
 测试入口：
 
 - `npm run build`：TypeScript 构建。
-- `npm run unit`：细粒度单元测试，覆盖 TODO 解析、checkpoint 写回、MCP guard 和注册兼容契约。
+- `npm run unit`：细粒度单元测试，覆盖执行清单解析、进度记录写回、MCP guard 和注册兼容契约。
 - `npm run smoke`：端到端 smoke 测试，覆盖 spec、AGENTS、CLI 和注册主流程。
 - `npm run release:check`：发布前契约检查，覆盖版本、CLI/MCP 启动参数和关键文档说明。
 - `npm run verify`：依次运行 build、unit、smoke、release:check。

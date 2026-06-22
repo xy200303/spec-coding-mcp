@@ -87,9 +87,9 @@ spec_review_result
 
 `spec_context` 会附带当前 spec/TODO、下一步建议、guidance 索引和必要执行护栏。工程、UI/UX、spec 写作等原则详情按需用 `spec_guidance_list` / `spec_guidance_read` 读取。
 
-## TODO 任务
+## 执行清单任务
 
-短任务可以用 TODO 清单表达：
+短任务可以用执行清单表达：
 
 ```text
 spec_todo
@@ -98,7 +98,7 @@ spec_todo
 它会创建 `specs/todo/*.md`。也可以直接在 active spec 里写：
 
 ```md
-## TODO
+## 执行清单
 
 - [ ] 定位相关实现。
 - [ ] 更新测试。

@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Spec Coding MCP
   text: 把 AI 开发收回到可审查的 spec 里
-  tagline: 为 Codex、Claude Code、OpenCode 等编程工具提供同一套本地规格上下文：先看清需求，再执行 TODO，最后把实现结果写回项目。
+  tagline: 为 Codex、Claude Code、OpenCode 等编程工具提供同一套本地规格上下文：先看清需求，再执行清单，最后把实现结果写回项目。
   actions:
     - theme: brand
       text: 5 分钟接入
@@ -19,10 +19,10 @@ hero:
 features:
   - title: 先对齐项目事实
     details: 从现有源码生成 review specs，把隐含结构、命令和边界摊开给人审查。
-  - title: 按 TODO 顺序执行
+  - title: 按执行清单推进
     details: 模型读取 spec_context 后只处理未勾选任务，完成一项就回写一项。
   - title: 记录验证与风险
-    details: checkpoint 保存变更文件、验证命令、阻塞原因和剩余风险。
+    details: 进度记录保存变更文件、验证命令、阻塞原因和剩余风险。
   - title: 多个 AI 工具共用
     details: Codex、Claude Code、OpenCode 等工具读取同一套 spec，而不是各说各话。
   - title: 完成后可追溯
@@ -45,7 +45,7 @@ features:
     </article>
     <article class="contract-item">
       <span>During</span>
-      <h3>按 TODO 做</h3>
+      <h3>按清单做</h3>
       <p>模型按未完成任务顺序实现，不靠聊天历史猜下一步。</p>
     </article>
     <article class="contract-item">
@@ -69,7 +69,7 @@ features:
     </article>
     <article class="usage-item">
       <h3>连续开发功能</h3>
-      <p>每次变更都有 active spec 和 checkpoint，长期迭代不会断线。</p>
+      <p>每次变更都有 active spec 和进度记录，长期迭代不会断线。</p>
     </article>
     <article class="usage-item">
       <h3>约束 AI 行为</h3>

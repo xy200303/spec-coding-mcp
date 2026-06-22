@@ -192,10 +192,10 @@ try {
     "status: 'active'",
     "description: 'User-requested implementation spec",
     "创建一个简单 CLI 项目",
-    "- status: active",
-    "## 定位与事实来源",
+    "## 任务说明",
+    "## 事实依据",
     "禁止编造",
-    "## AI 实现计划",
+    "## 实现计划",
     "## UI/交互 Skill 路由",
     "ui-ux-pro-max",
     "spec_skills_install",
@@ -352,7 +352,7 @@ try {
     "open TODOs: 0",
     "content: 未内嵌；需要完整内容时请用读文件工具打开上面的 file。",
     "source-review/needs-ai-summary",
-    "未发现未完成 TODO；请按 selected specs 的目标、行为规则和验收标准执行。",
+    "未发现未完成 TODO；请按 selected specs 的目标结果、行为约定和完成标准执行。",
     "Recommended Next Step",
     "nextTool: `spec_create`",
     "alternatives:",
@@ -657,9 +657,9 @@ try {
     "type: 'active-spec'",
     "status: 'active'",
     "source: 'user-prompt'",
-    "## AI 实现计划",
+    "## 实现计划",
     "## UI/交互 Skill 路由",
-    "## 实际行为记录",
+    "## 执行记录",
     "## Guidance",
     "spec_guidance_list",
     "spec_guidance_read",
@@ -712,7 +712,7 @@ try {
     "type: 'todo-spec'",
     "status: 'todo'",
     "source: 'user-prompt'",
-    "## 实际行为记录",
+    "## 执行记录",
     "spec_guidance_list",
     "spec_guidance_read",
     "`engineering`（`specs/guidance/engineering.md`）",
@@ -808,7 +808,7 @@ try {
   if (context.markdown.includes("Engineering Constraints") || context.markdown.includes("Business Confirmation Rules") || context.markdown.includes("完整工程规则见 `AGENTS.md`")) {
     throw new Error("Expected workflow mode to replace long rule sections with guidance indexes.");
   }
-  if (context.markdown.includes("```md") || context.markdown.includes("## 执行要求")) {
+  if (context.markdown.includes("```md") || context.markdown.includes("## 执行协议")) {
     throw new Error("Expected workflow mode to render selected specs as an index instead of embedded markdown.");
   }
   if (context.markdown.includes("Source Signals") || context.markdown.includes("Suggested Search Targets")) {
@@ -830,7 +830,7 @@ try {
   ], "Expected full spec context to include expanded indexes without embedding full documents");
   if (
     contextWithHints.markdown.includes("```md") ||
-    contextWithHints.markdown.includes("## 执行要求") ||
+    contextWithHints.markdown.includes("## 执行协议") ||
     contextWithHints.markdown.includes("Engineering Constraints") ||
     contextWithHints.markdown.includes("Business Confirmation Rules") ||
     engineeringConstraintBullets().every((item) => contextWithHints.markdown.includes(item)) ||
@@ -867,7 +867,7 @@ try {
     throw new Error("Expected checkpoint to mark one TODO.");
   }
   const checkpointText = await readFile(path.join(root, todo.specs[0]), "utf8");
-  if (!checkpointText.includes("- [x] 补充禁用态字段") || !checkpointText.includes("## Checkpoint") || !checkpointText.includes("### Summary") || !checkpointText.includes("passed `npm test`") || !checkpointText.includes("1. 禁用用户") || !checkpointText.includes("  - 条件：用户 disabled 为 true") || !checkpointText.includes("  - 触发入口：用户详情接口返回 disabled 字段后发起敏感操作") || !checkpointText.includes("  - 输入与前置状态：当前用户记录 disabled=true，操作请求命中敏感能力") || !checkpointText.includes("    1. 读取用户详情") || !checkpointText.includes("  - 输出结果：返回不可继续操作的响应") || !checkpointText.includes("  - 副作用：不执行敏感操作写入") || !checkpointText.includes("  - 结果摘要：不能发起敏感操作")) {
+  if (!checkpointText.includes("- [x] 补充禁用态字段") || !checkpointText.includes("## 进度记录") || !checkpointText.includes("### 完成摘要") || !checkpointText.includes("passed `npm test`") || !checkpointText.includes("1. 禁用用户") || !checkpointText.includes("  - 条件：用户 disabled 为 true") || !checkpointText.includes("  - 触发入口：用户详情接口返回 disabled 字段后发起敏感操作") || !checkpointText.includes("  - 输入与前置状态：当前用户记录 disabled=true，操作请求命中敏感能力") || !checkpointText.includes("    1. 读取用户详情") || !checkpointText.includes("  - 输出结果：返回不可继续操作的响应") || !checkpointText.includes("  - 副作用：不执行敏感操作写入") || !checkpointText.includes("  - 结果摘要：不能发起敏感操作")) {
     throw new Error("Expected checkpoint to update TODO and append verification.");
   }
 
@@ -897,7 +897,7 @@ try {
     throw new Error("Expected review result to return structured TODO lists.");
   }
   const reviewText = await readFile(path.join(root, todo.specs[0]), "utf8");
-  if (!reviewText.includes("## Review Result") || !reviewText.includes("### Incomplete TODOs") || !reviewText.includes("测试覆盖待补齐") || !reviewText.includes("接口未返回禁用态") || !reviewText.includes("触发入口：用户详情响应缺少 disabled 字段") || !reviewText.includes("1. 读取响应对象") || !reviewText.includes("输出结果：页面按未禁用用户展示") || !reviewText.includes("按 false 处理")) {
+  if (!reviewText.includes("## 审查记录") || !reviewText.includes("### 未完成清单") || !reviewText.includes("测试覆盖待补齐") || !reviewText.includes("接口未返回禁用态") || !reviewText.includes("触发入口：用户详情响应缺少 disabled 字段") || !reviewText.includes("1. 读取响应对象") || !reviewText.includes("输出结果：页面按未禁用用户展示") || !reviewText.includes("按 false 处理")) {
     throw new Error("Expected review result to append structured review output.");
   }
 
@@ -930,8 +930,8 @@ try {
     throw new Error(`Expected done spec to use ordered readable name, got: ${done.specs[0]}`);
   }
   const doneText = await readFile(path.join(root, done.specs[0]), "utf8");
-  if (!doneText.includes("type: done-spec") || !doneText.includes("status: done") || !doneText.includes("category: done") || !doneText.includes("- status: done") || !doneText.includes("## 最终行为契约") || !doneText.includes("给用户审查功能完整行为") || !doneText.includes("模型自行采用的默认策略也必须写清楚") || !doneText.includes("当前用户没有敏感操作权限") || !doneText.includes("触发入口：用户提交敏感操作请求") || !doneText.includes("输入与前置状态：会话缺少敏感操作权限") || !doneText.includes("1. 读取会话权限") || !doneText.includes("输出结果：返回权限不足错误") || !doneText.includes("副作用：不执行业务写入") || !doneText.includes("返回可理解错误")) {
-    throw new Error("Expected archived spec meta status to be done.");
+  if (!doneText.includes("type: done-spec") || !doneText.includes("status: done") || !doneText.includes("category: done") || doneText.includes("- status: done") || doneText.includes("## Meta") || !doneText.includes("## 最终行为契约") || !doneText.includes("给用户审查功能完整行为") || !doneText.includes("模型自行采用的默认策略也必须写清楚") || !doneText.includes("当前用户没有敏感操作权限") || !doneText.includes("触发入口：用户提交敏感操作请求") || !doneText.includes("输入与前置状态：会话缺少敏感操作权限") || !doneText.includes("1. 读取会话权限") || !doneText.includes("输出结果：返回权限不足错误") || !doneText.includes("副作用：不执行业务写入") || !doneText.includes("返回可理解错误")) {
+    throw new Error("Expected archived spec to use YAML status and omit duplicated body metadata.");
   }
   if (doneText.includes("## Guidance") || doneText.includes("## 工程质量约束") || doneText.includes("### Hard Rules") || doneText.includes("## 业务不确定性强制确认")) {
     throw new Error("Expected done archive to omit active guidance and engineering-rule template sections.");

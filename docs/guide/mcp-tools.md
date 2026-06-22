@@ -7,7 +7,7 @@ Spec Coding MCP 提供一组面向 AI 编程的工具。它们不要求用户手
 | `spec_init` | 初始化 specs 目录和模板 | 项目第一次接入 |
 | `spec_generate_from_source` | 从现有源码反推 review specs | 旧项目审查 |
 | `spec_create` | 根据用户描述创建 active spec | 新需求开始 |
-| `spec_todo` | 根据用户描述创建可执行 TODO 清单 | 拆分轻量任务 |
+| `spec_todo` | 根据用户描述创建可执行清单 | 拆分轻量任务 |
 | `spec_list` | 列出 review、active、todo、done specs | 查找当前规格 |
 | `spec_context` | 返回 AI 实现代码需要的 spec 和 TODO 上下文 | 开始写代码前 |
 | `spec_guidance_list` | 列出可编辑 guidance 提示词 | 需要校准原则时 |
@@ -32,29 +32,29 @@ Spec Coding MCP 提供一组面向 AI 编程的工具。它们不要求用户手
 - 完成后调用 `spec_checkpoint` 的提醒
 - 完成后需要调用 `spec_done` 的提醒
 
-`spec_context` 会要求 AI 按未勾选 TODO 从上到下执行；完成后把任务改为 `[x]`，无法完成时保留未勾选并说明阻塞原因。
+`spec_context` 会要求 AI 按未勾选执行清单从上到下执行；完成后把任务改为 `[x]`，无法完成时保留未勾选并说明阻塞原因。
 
 ## spec_checkpoint 的角色
 
 `spec_checkpoint` 用于在实现后把事实写回 spec 或 TODO：
 
-- 自动勾选匹配到的 completed TODO
+- 自动勾选匹配到的已完成清单项
 - 记录实现摘要和变更文件
 - 记录验证命令的 passed、failed 或 not-run 状态
 - 记录风险和阻塞项
 
-复杂项目里建议每完成一组相关 TODO 就记录一次 checkpoint，再继续下一组任务。
+复杂项目里建议每完成一组相关任务就记录一次进度记录，再继续下一组任务。
 
 ## spec_review_result 的角色
 
 `spec_review_result` 适合回写一轮开发的结构化结果：
 
-- completed TODOs
-- incomplete TODOs
-- changed files
-- verification status
-- risks
-- blockers
+- 已完成清单
+- 未完成清单
+- 变更文件
+- 验证结果
+- 风险
+- 阻塞
 
 它比 checkpoint 更像一次正式交接，尤其适合复杂项目的阶段性收尾。
 
@@ -64,12 +64,12 @@ Spec Coding MCP 提供一组面向 AI 编程的工具。它们不要求用户手
 
 - `engineering`：工程边界、代码质量和业务确认规则。
 - `ui-ux`：事实优先、语境驱动的 UI/UX 原则。
-- `spec-writing`：TODO、checkpoint、done 和行为记录要求。
+- `spec-writing`：执行清单、进度记录、done 归档和行为记录要求。
 - `quality-review`：实现后自查代码、测试、架构、UI/交互和交付风险。
 
 默认 guidance 文件顶部包含类似 SKILL.md 的 YAML 元信息：`name`、`version`、`title`、`description`、`category`、`triggers`、`appliesTo` 和 `updated`。`spec_guidance_list` 会输出这些摘要字段，`spec_guidance_read` 会在读取正文前显示同一组元信息，方便工具和模型按名称、版本、描述、触发词和适用对象检索。
 
-YAML 元信息只用于需要被工具读取的文档，例如 AGENTS/CLAUDE、specs README、guidance、review specs、active specs、todo specs 和 done specs。普通 README 和 VitePress docs 页面不默认加入这套 SKILL/spec 风格元信息；工具读取 spec 状态时继续兼容旧的 `## Meta` / `- status:` / `- source:` 写法。
+YAML 元信息只用于需要被工具读取的文档，例如 AGENTS/CLAUDE、specs README、guidance、review specs、active specs、todo specs 和 done specs。普通 README 和 VitePress docs 页面不默认加入这套 SKILL/spec 风格元信息。新生成的 spec 正文不再重复 `## Meta`、`status` 或 `source`；工具读取 spec 状态时继续兼容旧的 `## Meta` / `- status:` / `- source:` 写法。
 
 UI/UX guidance 不再维护本地设计原则、视觉约束、官网结构规则、AI 味 checklist、文案约束或首屏 checklist。它只负责引导模型安装并使用指定的 `ui-ux-pro-max` skill；具体设计判断交给该 skill 和当前 spec/用户要求。
 

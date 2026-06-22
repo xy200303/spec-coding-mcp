@@ -15,7 +15,7 @@ export function buildContextInstructions(): string[] {
 
 const requiredGuards = [
   "写代码或改文档前必须先读本次 `spec_context`；selected specs 和 open TODOs 是本轮唯一需求源。",
-  "按 open TODOs 自上而下执行；无 TODO 时按 selected specs 的目标、规则和验收标准执行。",
+  "按 open TODOs 自上而下执行；无 TODO 时按 selected specs 的目标结果、行为约定和完成标准执行。",
   "源码线索只是搜索入口，不是事实；修改前必须自行读取相关文件、测试和配置确认。",
   "金额、状态机、并发、幂等、退款、权限、合规等高风险业务不确定时，先问用户，不要猜。",
   "阶段完成后调用 `spec_checkpoint`；实现、TODO、验证和最终行为契约都完成后才能调用 `spec_done`。"
@@ -51,7 +51,7 @@ function selectedSpecHeadings(text: string, limit: number): string[] {
   return text
     .split(/\r?\n/)
     .filter(isSecondLevelHeading)
-    .filter((line) => !["## 执行要求", "## 工程质量约束", "## 业务不确定性强制确认", "## Checkpoint", "## Done"].includes(line))
+    .filter((line) => !["## 执行要求", "## 执行协议", "## 工程质量约束", "## 业务不确定性强制确认", "## Checkpoint", "## 进度记录", "## Done", "## 归档记录"].includes(line))
     .slice(0, limit);
 }
 
@@ -81,7 +81,7 @@ function renderTodoLines(todos: SpecContext["todos"], hasSelectedSpecs: boolean,
     return todos.map((todo, index) => `${index + 1}. ${todo.text}（${todo.file}:${todo.line}）`);
   }
   if (hasSelectedSpecs) {
-    return ["- 未发现未完成 TODO；请按 selected specs 的目标、行为规则和验收标准执行。"];
+    return ["- 未发现未完成 TODO；请按 selected specs 的目标结果、行为约定和完成标准执行。"];
   }
   if (state === "done-only") {
     return ["- 当前没有 open TODO；项目只有 done 历史记录，需要新工作时先创建 spec_todo 或 spec_create。"];
