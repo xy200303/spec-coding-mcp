@@ -38,7 +38,7 @@ features:
   <p class="install-title">两条命令把 spec 工作流放进项目</p>
   <div class="install-code">
     <code>npm install -g @dev_xiaoyun/spec-coding-mcp</code>
-    <code>specc init</code>
+    <code><span>specc</span><span>init</span></code>
   </div>
 </div>
 
