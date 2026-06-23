@@ -1,7 +1,7 @@
 /* Archive writer for completed specs. */
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { inferSpecFileName, nextSpecDocumentPath, resolveInsideRoot, titleFromMarkdown } from "./spec-files.js";
+import { inferSpecFileName, listSpecsIn, nextSpecDocumentPath, resolveInsideRoot, titleFromMarkdown } from "./spec-files.js";
 import type { BehaviorRecord, SpecResult } from "./types.js";
 import { nowIso, relativePosix } from "../shared/utils.js";
 import { behaviorRecordLines, hasBehaviorRecords } from "./behavior-record.js";
@@ -21,16 +21,16 @@ function markArchivedStatus(text: string): string {
 
 const doneArchiveExcludedSections = new Set([
   "## Meta",
-  "## 执行要求",
-  "## 执行协议",
+  "## \u6267\u884C\u8981\u6C42",
+  "## \u6267\u884C\u534F\u8BAE",
   "## Guidance",
-  "## 工程质量约束",
-  "## 业务不确定性强制确认",
+  "## \u5DE5\u7A0B\u8D28\u91CF\u7EA6\u675F",
+  "## \u4E1A\u52A1\u4E0D\u786E\u5B9A\u6027\u5F3A\u5236\u786E\u8BA4",
   "## Checkpoint",
-  "## 进度记录",
+  "## \u8FDB\u5EA6\u8BB0\u5F55",
   "## Done",
-  "## 归档记录",
-  "## 最终行为契约"
+  "## \u5F52\u6863\u8BB0\u5F55",
+  "## \u6700\u7EC8\u884C\u4E3A\u5951\u7EA6"
 ]);
 
 function isTopLevelSection(line: string): boolean {
@@ -70,25 +70,33 @@ export async function markSpecDone(input: { projectRoot: string; specsDir?: stri
   const doneText = [
     text.trimEnd(),
     "",
-    "## 归档记录",
+    "## \u5F52\u6863\u8BB0\u5F55",
     "",
-    `- 完成时间：${nowIso()}`,
-    input.note ? `- 备注：${input.note}` : "- 备注：verified by user/Codex",
+    `- \u5B8C\u6210\u65F6\u95F4\uFF1A${nowIso()}`,
+    input.note ? `- \u5907\u6CE8\uFF1A${input.note}` : "- \u5907\u6CE8\uFF1Averified by user/Codex",
     "",
-    ...behaviorRecordLines("## 最终行为契约", input.behaviorRecords)
+    ...behaviorRecordLines("## \u6700\u7EC8\u884C\u4E3A\u5951\u7EA6", input.behaviorRecords)
   ].join("\n");
   await fs.writeFile(target, `${doneText}\n`, "utf8");
   await fs.rm(source);
+  const [remainingActive, remainingTodo, remainingReview, remainingDone] = await Promise.all([
+    listSpecsIn(root, specsDir, "active"),
+    listSpecsIn(root, specsDir, "todo"),
+    listSpecsIn(root, specsDir, "review"),
+    listSpecsIn(root, specsDir, "done")
+  ]);
   return {
     projectRoot: root,
     specsDir,
     files: [{ path: relativePosix(root, target), status: "created" }],
     specs: [relativePosix(root, target)],
     nextSteps: [
-      "Spec 已归档到 done/。",
+      "Spec \u5DF2\u5F52\u6863\u5230 done/\u3002",
       ...(hasBehaviorRecords(input.behaviorRecords)
-        ? ["最终行为契约已记录。"]
-        : ["Warning: 未提供给用户审查的完整最终行为契约；必须补充整个功能的所有已知正常、失败、边界、权限、状态、异常、空值和默认行为，模型自行采用的默认策略也要写清。该 done 记录不可作为真实行为事实。"])
+        ? ["\u6700\u7EC8\u884C\u4E3A\u5951\u7EA6\u5DF2\u8BB0\u5F55\u3002"]
+        : ["Warning: \u672A\u63D0\u4F9B\u7ED9\u7528\u6237\u5BA1\u67E5\u7684\u5B8C\u6574\u6700\u7EC8\u884C\u4E3A\u5951\u7EA6\uFF1B\u5FC5\u987B\u8865\u5145\u6574\u4E2A\u529F\u80FD\u7684\u6240\u6709\u5DF2\u77E5\u6B63\u5E38\u3001\u5931\u8D25\u3001\u8FB9\u754C\u3001\u6743\u9650\u3001\u72B6\u6001\u3001\u5F02\u5E38\u3001\u7A7A\u503C\u548C\u9ED8\u8BA4\u884C\u4E3A\uFF0C\u6A21\u578B\u81EA\u884C\u91C7\u7528\u7684\u9ED8\u8BA4\u7B56\u7565\u4E5F\u8981\u5199\u6E05\u3002\u8BE5 done \u8BB0\u5F55\u4E0D\u53EF\u4F5C\u4E3A\u771F\u5B9E\u884C\u4E3A\u4E8B\u5B9E\u3002"]),
+      "",
+      `\u5237\u65B0\u76EE\u5F55\u5BB9\u91CF\uFF1Aactive=${remainingActive.length}, todo=${remainingTodo.length}, review=${remainingReview.length}, done=${remainingDone.length}`
     ]
   };
 }
