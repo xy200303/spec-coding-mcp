@@ -1,7 +1,7 @@
 /* Spec scaffold generation for README, guidance, prompt specs, TODO specs, and source-derived review specs. */
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { agentsMd, claudeMd, specsReadme } from "../templates/agents.js";
+import { agentsMd, claudeMd, specsReadme, specCodingMcpAppendix } from "../templates/agents.js";
 import { reviewIndex, sourceInventory, sourceReviewSpec } from "../templates/spec-documents.js";
 import { todoSpec, userPromptSpec } from "../templates/prompt-documents.js";
 import type { AgentFileResult, GeneratedFile, SpecItem, SpecResult } from "./types.js";
@@ -9,7 +9,7 @@ import { writeDefaultGuidanceFiles } from "./guidance.js";
 import { scanSource, specCandidatesFromSource } from "./source-scan.js";
 import { inferProjectName, inferSpecFileName, inferTitle, inferTodoFileName, listSpecsIn, nextSpecDocumentPath } from "./spec-files.js";
 import { writeTextFile } from "./file-writers.js";
-import { nowIso, relativePosix } from "../shared/utils.js";
+import { nowIso, relativePosix, pathExists } from "../shared/utils.js";
 
 type BootstrapProjectKind = "auto" | "new" | "existing";
 
@@ -229,8 +229,34 @@ export async function generateAgentsFile(input: { projectRoot: string; projectNa
   const root = path.resolve(input.projectRoot);
   const projectName = inferProjectName(root, input.projectName);
   const files: GeneratedFile[] = [];
-  await writeTextFile(root, "AGENTS.md", agentsMd(projectName), input.overwrite ?? false, files);
-  await writeTextFile(root, "CLAUDE.md", claudeMd(projectName), input.overwrite ?? false, files);
+  const overwrite = input.overwrite ?? false;
+
+  for (const [fileName, fullContent] of [
+    ["AGENTS.md" as const, agentsMd(projectName)],
+    ["CLAUDE.md" as const, claudeMd(projectName)],
+  ]) {
+    const absolute = path.join(root, fileName);
+
+    if (await pathExists(absolute)) {
+      const existing = await fs.readFile(absolute, "utf8");
+      // Already has our section — skip
+      if (existing.includes("Spec Coding MCP")) {
+        files.push({ path: relativePosix(root, absolute), status: "skipped", reason: "已包含 Spec Coding MCP 章节" });
+        continue;
+      }
+      // Colleague's file without our section — append only
+      if (!overwrite) {
+        const appended = existing.trimEnd() + "\n" + specCodingMcpAppendix() + "\n";
+        await fs.writeFile(absolute, appended, "utf8");
+        files.push({ path: relativePosix(root, absolute), status: "updated", reason: "追加 Spec Coding MCP 章节" });
+        continue;
+      }
+    }
+
+    // New file or overwrite mode — create full file
+    await writeTextFile(root, fileName, fullContent, overwrite, files);
+  }
+
   return {
     projectRoot: root,
     file: "AGENTS.md",

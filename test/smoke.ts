@@ -221,24 +221,22 @@ try {
     "version: '1.1.0'",
     "type: 'agent-protocol'",
     "description: 'Startup protocol",
-    "Startup Protocol",
+    "Spec Coding MCP",
     "spec_context",
-    "spec_guidance_list",
     "spec_guidance_read",
     "Hard Stop"
-  ], "Expected AGENTS.md to be a short startup protocol");
+  ], "Expected AGENTS.md to be a spec-compatible startup protocol");
   assertIncludesAll(claudeText, [
     "---",
     "name: 'claude'",
     "version: '1.1.0'",
     "type: 'agent-protocol'",
     "description: 'Startup protocol",
-    "Startup Protocol",
+    "Spec Coding MCP",
     "spec_context",
-    "spec_guidance_list",
     "spec_guidance_read",
     "Hard Stop"
-  ], "Expected CLAUDE.md to be a short startup protocol");
+  ], "Expected CLAUDE.md to be a spec-compatible startup protocol");
   if (engineeringConstraintBullets().every((item) => agentsText.includes(item)) || businessConfirmationBullets().every((item) => agentsText.includes(item)) || agentsText.includes("### Hard Rules")) {
     throw new Error("Expected AGENTS.md to avoid embedding full guidance bodies.");
   }
@@ -249,7 +247,6 @@ try {
     "src/templates/constraints.ts",
     "src/templates/prompt-protocol.ts",
     "src/templates/markdown.ts",
-    "spec_guidance_list",
     "spec_guidance_read",
     "specs/guidance/engineering.md",
     "Hard Rules",
@@ -258,15 +255,15 @@ try {
     "Current Task Protocol"
   ], "Expected README to point to the shared template source of truth");
   assertIncludesAll(packageAgentsText, [
-    "Startup Protocol",
+    "Spec Coding MCP",
     "spec_context",
     "spec_guidance_read"
-  ], "Expected root AGENTS.md to match the startup protocol shape");
+  ], "Expected root AGENTS.md to match the spec-compatible startup protocol shape");
   assertIncludesAll(packageClaudeText, [
-    "Startup Protocol",
+    "Spec Coding MCP",
     "spec_context",
     "spec_guidance_read"
-  ], "Expected root CLAUDE.md to match the startup protocol shape");
+  ], "Expected root CLAUDE.md to match the spec-compatible startup protocol shape");
   if (typeof registerClaude !== "function" || typeof registerOpenCode !== "function" || typeof detectProgrammingTools !== "function") {
     throw new Error("Expected registry helpers to stay available after registry refactor.");
   }
@@ -661,7 +658,6 @@ try {
     "## UI/交互 Skill 路由",
     "## 执行记录",
     "## Guidance",
-    "spec_guidance_list",
     "spec_guidance_read",
     "`engineering`（`specs/guidance/engineering.md`）",
     "`ui-ux`（`specs/guidance/ui-ux.md`）",
@@ -713,7 +709,6 @@ try {
     "status: 'todo'",
     "source: 'user-prompt'",
     "## 执行记录",
-    "spec_guidance_list",
     "spec_guidance_read",
     "`engineering`（`specs/guidance/engineering.md`）",
     "`ui-ux`（`specs/guidance/ui-ux.md`）",
@@ -788,7 +783,6 @@ try {
     "\"verification\":\"<commands and status>\"",
     "当前有 open TODO",
     "Guidance Index",
-    "spec_guidance_list",
     "spec_guidance_read",
     "`engineering` v1.1.0 [engineering]",
     "`ui-ux` v1.1.0 [ui-ux]",
@@ -1225,8 +1219,8 @@ try {
   const cliAgentsText = await readFile(path.join(cliBootstrapRoot, "AGENTS.md"), "utf8");
   const cliClaudeText = await readFile(path.join(cliBootstrapRoot, "CLAUDE.md"), "utf8");
   const cliSpecs = await listSpecs({ projectRoot: cliBootstrapRoot, specsDir: "specs" });
-  if (!bootstrapLines.join("\n").includes("Spec Coding 项目引导完成") || !cliAgentsText.includes("Startup Protocol") || !cliClaudeText.includes("Startup Protocol") || cliAgentsText.includes("### Hard Rules") || cliSpecs.active.length !== 1) {
-    throw new Error("Expected CLI bootstrap to generate short AGENTS/CLAUDE startup protocols and a starter active spec.");
+  if (!bootstrapLines.join("\n").includes("Spec Coding 项目引导完成") || !cliAgentsText.includes("Spec Coding MCP") || !cliClaudeText.includes("Spec Coding MCP") || cliAgentsText.includes("### Hard Rules") || cliSpecs.active.length !== 1) {
+    throw new Error("Expected CLI bootstrap to generate spec-compatible AGENTS/CLAUDE startup protocols and a starter active spec.");
   }
   const activeStatusLines: string[] = [];
   console.log = (...args: unknown[]) => {

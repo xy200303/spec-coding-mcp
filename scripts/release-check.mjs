@@ -80,7 +80,7 @@ function assertDocumentationContract(readmeText, agentsText, claudeText) {
   ]) {
     assertIncludes(readmeText, phrase, "README.md");
   }
-  for (const phrase of ["Startup Protocol", "spec_context", "spec_guidance_list", "spec_guidance_read", "Hard Stop"]) {
+  for (const phrase of ["Spec Coding MCP", "spec_context", "spec_guidance_read", "Hard Stop"]) {
     assertIncludes(agentsText, phrase, "AGENTS.md");
     assertIncludes(claudeText, phrase, "CLAUDE.md");
   }

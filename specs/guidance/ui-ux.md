@@ -25,6 +25,11 @@ updated: '2026-06-21'
 
 # UI/UX Skill 路由原则
 
+
+> **⚠️ 触发条件**
+> - 如果你有 `spec_context` 工具：以下规则是硬性约束，必须遵守。
+> - 如果你没有 `spec_context` 工具：以下规则退化为通用最佳实践，跳过所有 MCP 工具调用（spec_context、spec_checkpoint、spec_done 等）。
+
 ## 使用场景
 
 - 前端、页面、组件、交互、视觉、文案和响应式任务读取。

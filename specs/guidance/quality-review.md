@@ -22,6 +22,11 @@ updated: '2026-06-23'
 
 # 质量审查原则
 
+
+> **⚠️ 触发条件**
+> - 如果你有 `spec_context` 工具：以下规则是硬性约束，必须遵守。
+> - 如果你没有 `spec_context` 工具：以下规则退化为通用最佳实践，跳过所有 MCP 工具调用（spec_context、spec_checkpoint、spec_done 等）。
+
 ## 使用场景
 
 - 完成实现、准备 checkpoint、done、commit 或 PR 前读取。
