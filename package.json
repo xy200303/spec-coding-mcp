@@ -1,6 +1,6 @@
 {
   "name": "@dev_xiaoyun/spec-coding-mcp",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "description": "MCP service for spec coding: generate, review, implement, and archive lightweight specs.",
   "type": "module",
   "main": "./dist/index.js",
